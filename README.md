@@ -1,5 +1,5 @@
 # jawhitti.github.io
 GitHub pages site
 
-![alt text](nginx_plus_logo.png "nginx+")
+![alt text](http://jawhitti.github.io/nginx_plus_logo.png "nginx+")
 
