@@ -10,7 +10,7 @@ NGINX,adopt,platforms,FALSE,"For front-end web servers and reverse-proxy NGINX i
 GitHub,adopt,tools,FALSE,"The best place to put code"
 Octopus Deploy,hold,FALSE,"While Octopus is generally a good tool it is not a great fit for cloud"
 XState,trial,platforms,FALSE,"XState is a promising library for state machines in nodejs"
-NodeJS,adopt,platforms,FALSE,"For applications that mostly do network I/O nodejs has proven fast and powerful while being much easier to work with than classic multithreading environments"  
+nodejs,adopt,platforms,FALSE,"For applications that mostly do network I/O nodejs"
 Composer,adopt,tools,TRUE,"Although the idea of dependency management ..."  
 Canary builds,trial,techniques,FALSE,"Many projects have external code dependencies ..."  
 Apache Kylin,assess,platforms,TRUE,"Apache Kylin is an open source analytics solution ..."    
