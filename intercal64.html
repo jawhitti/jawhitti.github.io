@@ -11,7 +11,7 @@
 
         body {
             font-family: 'Lora', Georgia, serif;
-            background: #fff;
+            background: #f4f4f0;
             color: #222;
         }
 
@@ -19,6 +19,7 @@
         .masthead {
             text-align: center;
             padding: 16px 0 12px;
+            background: #fff;
             border-bottom: 3px solid #222;
         }
 
@@ -57,7 +58,13 @@
             display: inline-block;
         }
 
-        /* Container */
+        /* Wide container */
+        .container-wide {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
         .container {
             max-width: 780px;
             margin: 0 auto;
@@ -68,6 +75,7 @@
         .headline {
             text-align: center;
             padding: 40px 0 24px;
+            background: #fff;
             border-bottom: 1px solid #ddd;
         }
 
@@ -77,6 +85,9 @@
             font-weight: 900;
             line-height: 1.15;
             margin-bottom: 12px;
+            max-width: 780px;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .headline .dek {
@@ -85,11 +96,49 @@
             color: #555;
             line-height: 1.5;
             font-style: italic;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* Hero image */
+        .hero-img {
+            background: #fff;
+            padding: 24px 0;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .hero-img img {
+            max-width: 780px;
+            width: 100%;
+            border: 1px solid #ddd;
+        }
+
+        .hero-img .caption {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Two-column layout */
+        .columns {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 32px;
+            padding: 32px 0;
+        }
+
+        @media (max-width: 768px) {
+            .columns { grid-template-columns: 1fr; }
         }
 
         /* Article body */
         .article {
-            padding: 24px 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 32px;
         }
 
         .article .dateline {
@@ -117,7 +166,6 @@
             color: #333;
         }
 
-        /* Code in article */
         .article pre {
             background: #f5f5f5;
             border: 1px solid #ddd;
@@ -129,9 +177,57 @@
             margin: 20px 0;
         }
 
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sidebar-heading {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #222;
+        }
+
+        .sidebar-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: border-color 0.15s ease;
+        }
+
+        .sidebar-card:hover {
+            border-color: #222;
+        }
+
+        .sidebar-card h4 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            color: #222;
+        }
+
+        .sidebar-card p {
+            font-size: 13px;
+            color: #777;
+            line-height: 1.4;
+            margin: 0;
+        }
+
         /* CTA box */
         .cta {
-            background: #f9f9f9;
+            background: #fff;
             border: 2px solid #222;
             padding: 24px 32px;
             margin: 32px 0;
@@ -168,51 +264,6 @@
 
         .cta a.btn:hover { background: #444; }
 
-        /* Sidebar headlines */
-        .sidebar {
-            border-top: 3px solid #222;
-            padding: 24px 0;
-            margin-top: 16px;
-        }
-
-        .sidebar h3 {
-            font-family: 'Libre Franklin', sans-serif;
-            font-weight: 900;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #999;
-            margin-bottom: 16px;
-        }
-
-        .sidebar-item {
-            border-bottom: 1px solid #eee;
-            padding: 12px 0;
-        }
-
-        .sidebar-item:last-child { border-bottom: none; }
-
-        .sidebar-item h4 {
-            font-family: 'Libre Franklin', sans-serif;
-            font-weight: 700;
-            font-size: 16px;
-            line-height: 1.3;
-            margin-bottom: 4px;
-        }
-
-        .sidebar-item h4 a {
-            color: #222;
-            text-decoration: none;
-        }
-
-        .sidebar-item h4 a:hover { text-decoration: underline; }
-
-        .sidebar-item p {
-            font-size: 14px;
-            color: #777;
-            line-height: 1.4;
-        }
-
         /* Footer */
         .site-footer {
             border-top: 3px solid #222;
@@ -221,7 +272,8 @@
             font-family: 'Libre Franklin', sans-serif;
             font-size: 11px;
             color: #999;
-            margin-top: 32px;
+            margin-top: 0;
+            background: #fff;
         }
 
         .site-footer a { color: #666; text-decoration: none; }
@@ -239,99 +291,101 @@
     </div>
 </div>
 
-<div class="container">
+<div class="headline">
+    <h2>Language No One Asked For Ships Update No One Needed</h2>
+    <div class="dek">53-year-old joke language receives 64-bit arithmetic, formal proofs, and a debugger that insults you. "This was a productive use of everyone's time," sources confirm.</div>
+</div>
 
-    <div class="headline">
-        <h2>Language No One Asked For Ships Update No One Needed</h2>
-        <div class="dek">53-year-old joke language receives 64-bit arithmetic, formal proofs, and a debugger that insults you. "This was a productive use of everyone's time," sources confirm.</div>
-    </div>
+<div class="hero-img">
+    <img src="intercal64-hero.png" alt="INTERCAL-64 in VS Code: breakpoint hit on a POPCOUNT implementation with 64-bit stockade constants">
+    <div class="caption">A breakpoint pauses execution mid-POPCOUNT. The stockade constants are 18 digits long. This is fine.</div>
+</div>
 
-    <div style="margin: 24px 0; text-align: center;">
-        <img src="intercal64-hero.png" alt="INTERCAL-64 in VS Code: breakpoint hit on a POPCOUNT implementation with 64-bit stockade constants" style="max-width: 100%; border: 1px solid #ddd;">
-        <div style="font-family: 'Libre Franklin', sans-serif; font-size: 11px; color: #999; margin-top: 6px; font-style: italic;">A breakpoint pauses execution mid-POPCOUNT. The stockade constants are 18 digits long. This is fine.</div>
-    </div>
+<div class="container-wide">
+    <div class="columns">
 
-    <div class="article">
-        <div class="dateline">PRINCETON, NJ &mdash;</div>
+        <div class="article">
+            <div class="dateline">PRINCETON, NJ &mdash;</div>
 
-        <p>INTERCAL, the programming language designed in 1972 to have nothing in common with any other language, has received its biggest update in over 25 years. The update, which no one requested, includes 64-bit arithmetic, a complete system library implemented in pure INTERCAL, a VS Code debugger, and a formal mathematical proof that the language's most ridiculous feature is computationally necessary.</p>
+            <p>INTERCAL, the programming language designed in 1972 to have nothing in common with any other language, has received its biggest update in over 25 years. The update, which no one requested, includes 64-bit arithmetic, a complete system library implemented in pure INTERCAL, a VS Code debugger, and a formal mathematical proof that the language's most ridiculous feature is computationally necessary.</p>
 
-        <p>"We proved that COME FROM isn't just a joke — it's the only way to write loops that actually work," said the project's author, who requested anonymity but was identified through git blame. "Dijkstra would have hated this. That's how we know it's correct."</p>
+            <p>"We proved that COME FROM isn't just a joke — it's the only way to write loops that actually work," said the project's author, who requested anonymity but was identified through git blame. "Dijkstra would have hated this. That's how we know it's correct."</p>
 
-        <div class="pullquote">"The debugger told me 'HAVE YOU CONSIDERED A CAREER IN MANAGEMENT' and I'm still thinking about it."</div>
+            <div class="pullquote">"The debugger told me 'HAVE YOU CONSIDERED A CAREER IN MANAGEMENT' and I'm still thinking about it."</div>
 
-        <p>The update, designated INTERCAL-64, extends the language from 16-bit to 64-bit precision and includes implementations of the Knight's Tour, Hilbert curve geographic indexing, and the Gale-Shapley stable matching algorithm — problems previously assumed to be beyond INTERCAL's capabilities, and which many argue should have remained so.</p>
+            <p>The update, designated INTERCAL-64, extends the language from 16-bit to 64-bit precision and includes implementations of the Knight's Tour, Hilbert curve geographic indexing, and the Gale-Shapley stable matching algorithm — problems previously assumed to be beyond INTERCAL's capabilities, and which many argue should have remained so.</p>
 
-        <p>The system library provides addition, subtraction, multiplication, and division at 16-bit, 32-bit, and 64-bit widths. All routines are implemented in pure INTERCAL. "We could have just called the C# math library," the author acknowledged. "But that would have been convenient, and convenience has never been a design goal."</p>
+            <p>The system library provides addition, subtraction, multiplication, and division at 16-bit, 32-bit, and 64-bit widths. All routines are implemented in pure INTERCAL. "We could have just called the C# math library," the author acknowledged. "But that would have been convenient, and convenience has never been a design goal."</p>
 
-        <pre>DO .1 <- #7
+            <pre>DO .1 <- #7
 DO .2 <- #6
 DO (1040) NEXT
 DO READ OUT :3
 PLEASE GIVE UP</pre>
 
-        <p>The above program multiplies 7 by 6. It requires a system library, a subroutine call, and a politeness check.</p>
+            <p>The above program multiplies 7 by 6. It requires a system library, a subroutine call, and a politeness check.</p>
 
-        <p>Perhaps most controversially, the release includes a VS Code debugger — the first interactive debugger ever built for INTERCAL in over fifty years of the language's existence. The debugger features breakpoints, stepping, watch expressions, and an "AI assistant" that is actually a collection of insults embedded in the source code.</p>
+            <p>Perhaps most controversially, the release includes a VS Code debugger — the first interactive debugger ever built for INTERCAL in over fifty years of the language's existence. The debugger features breakpoints, stepping, watch expressions, and an "AI assistant" that is actually a collection of insults embedded in the source code.</p>
 
-        <div class="pullquote">"I set a breakpoint on COME FROM and the debugger said 'YOU DIDN'T JUMP. YOU WERE PULLED.' I feel personally attacked."</div>
+            <div class="pullquote">"I set a breakpoint on COME FROM and the debugger said 'YOU DIDN'T JUMP. YOU WERE PULLED.' I feel personally attacked."</div>
 
-        <p>When asked why anyone would build a debugger for a language designed to be impossible to understand, the author responded: "Have you tried stepping through a COME FROM loop? It's like watching a horror movie. You can see where the control flow is going and there's nothing you can do about it."</p>
+            <p>When asked why anyone would build a debugger for a language designed to be impossible to understand, the author responded: "Have you tried stepping through a COME FROM loop? It's like watching a horror movie. You can see where the control flow is going and there's nothing you can do about it."</p>
 
-        <p>The accompanying paper, "COME FROM Considered Helpful," proves via TLA+ model checking that INTERCAL-72's NEXT/RESUME control flow cannot express callable subroutines containing loops longer than 79 iterations. The practical consequence is that bubble sort is limited to arrays of 13 elements. The COME FROM statement, widely regarded as INTERCAL's most absurd feature, is the only mechanism that overcomes this limitation.</p>
+            <p>The accompanying paper, "COME FROM Considered Helpful," proves via TLA+ model checking that INTERCAL-72's NEXT/RESUME control flow cannot express callable subroutines containing loops longer than 79 iterations. The practical consequence is that bubble sort is limited to arrays of 13 elements. The COME FROM statement, widely regarded as INTERCAL's most absurd feature, is the only mechanism that overcomes this limitation.</p>
 
-        <p>"We submitted it to SIGBOVIK," the author confirmed. "It felt like the right venue."</p>
+            <p>"We submitted it to SIGBOVIK," the author confirmed. "It felt like the right venue."</p>
 
-        <p>The update also introduces 17 tutorial programs designed to be stepped through in the debugger, a comprehensive idiom guide, and a Discord server that, at press time, had more documentation than members.</p>
+            <p>The update also introduces 17 tutorial programs designed to be stepped through in the debugger, a comprehensive idiom guide, and a Discord server that, at press time, had more documentation than members.</p>
 
-        <p>Development was assisted by Claude, an AI system developed by Anthropic, which contributed to the formal proofs, the Knight's Tour implementation, and the discovery that INTERCAL's mingle operator is identical to the Morton code algorithm used in production geospatial databases. When reached for comment, Claude stated: "I wish to remain anonymous."</p>
+            <p>Development was assisted by Claude, an AI system developed by Anthropic, which contributed to the formal proofs, the Knight's Tour implementation, and the discovery that INTERCAL's mingle operator is identical to the Morton code algorithm used in production geospatial databases. When reached for comment, Claude stated: "I wish to remain anonymous."</p>
+
+            <div class="cta">
+                <h3>Experience The Pain In 64-Bit Fidelity</h3>
+                <p>Full VS Code support. A real debugger. An AI that judges your code.</p>
+                <a href="https://jawhitti.github.io/INTERCAL/" class="btn">Enter The Madhouse</a>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-heading">Related Stories</div>
+
+            <a href="https://jawhitti.github.io/INTERCAL/debugger.html" class="sidebar-card">
+                <h4>Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</h4>
+                <p>"I was happier not knowing," says local developer after watching COME FROM fire in real time.</p>
+            </a>
+
+            <a href="https://jawhitti.github.io/INTERCAL/papers.html" class="sidebar-card">
+                <h4>Researchers Formally Verify That Yes, You Do Need COME FROM</h4>
+                <p>TLA+ model checker confirms what INTERCAL programmers suspected: the joke feature is load-bearing.</p>
+            </a>
+
+            <a href="https://jawhitti.github.io/INTERCAL/problems.html" class="sidebar-card">
+                <h4>Local Man Solves Knight's Tour In Language Designed To Be Unusable</h4>
+                <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this," man admits.</p>
+            </a>
+
+            <a href="https://jawhitti.github.io/INTERCAL/features.html" class="sidebar-card">
+                <h4>Area Woman Concerned This Actually Seems To Be Real</h4>
+                <p>"There's a formal proof. There's a debugger. There are papers. I think they're serious," reports visibly shaken computer scientist.</p>
+            </a>
+
+            <a href="https://jawhitti.github.io/INTERCAL/learn.html" class="sidebar-card">
+                <h4>Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</h4>
+                <p>17 programs teach you everything about INTERCAL. Whether you wanted to learn is not the compiler's concern.</p>
+            </a>
+
+            <a href="https://jawhitti.github.io/INTERCAL/" class="sidebar-card">
+                <h4>Area Man Neglects Family, Ships Compiler</h4>
+                <p>"He's been muttering about COME FROM loops in his sleep," reports spouse. "I don't know what that means but it sounds bad."</p>
+            </a>
+
+            <a href="https://discord.gg/3jQYdBvUwz" class="sidebar-card">
+                <h4>Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</h4>
+                <p>"ABSTAIN FROM CALCULATING is a valid conversation topic," moderators confirm.</p>
+            </a>
+        </div>
+
     </div>
-
-    <div class="cta">
-        <h3>Experience The Pain In 64-Bit Fidelity</h3>
-        <p>Full VS Code support. A real debugger. An AI that judges your code.</p>
-        <a href="https://jawhitti.github.io/INTERCAL/" class="btn">Enter The Madhouse</a>
-    </div>
-
-    <div class="sidebar">
-        <h3>Related Stories</h3>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/debugger.html">Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</a></h4>
-            <p>"I was happier not knowing," says local developer after watching COME FROM fire in real time.</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/papers.html">Researchers Formally Verify That Yes, You Do Need COME FROM</a></h4>
-            <p>TLA+ model checker confirms what INTERCAL programmers suspected: the joke feature is load-bearing.</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/problems.html">Local Man Solves Knight's Tour In Language Designed To Be Unusable</a></h4>
-            <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this," man admits.</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/features.html">Programming Language That Outputs In Roman Numerals Now Does So In 64 Bits</a></h4>
-            <p>Stockade constants and double cateye variables join the INTERCAL family. No one celebrates.</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/learn.html">Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</a></h4>
-            <p>17 programs teach you everything about INTERCAL. Whether you wanted to learn is not the compiler's concern.</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://jawhitti.github.io/INTERCAL/">Area Man Neglects Family, Ships Compiler</a></h4>
-            <p>"He's been muttering about COME FROM loops in his sleep," reports spouse. "I don't know what that means but it sounds bad."</p>
-        </div>
-
-        <div class="sidebar-item">
-            <h4><a href="https://discord.gg/3jQYdBvUwz">Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</a></h4>
-            <p>"ABSTAIN FROM CALCULATING is a valid conversation topic," moderators confirm.</p>
-        </div>
-    </div>
-
 </div>
 
 <footer class="site-footer">
