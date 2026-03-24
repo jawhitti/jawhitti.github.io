@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language No One Asked For Ships Update No One Needed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            background: #fff;
+            color: #222;
+        }
+
+        /* Masthead */
+        .masthead {
+            text-align: center;
+            padding: 16px 0 12px;
+            border-bottom: 3px solid #222;
+        }
+
+        .masthead-top {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .masthead h1 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .masthead-motto {
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .masthead-date {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            display: inline-block;
+        }
+
+        /* Container */
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Main headline */
+        .headline {
+            text-align: center;
+            padding: 40px 0 24px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .headline h2 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: clamp(24px, 4vw, 40px);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 12px;
+        }
+
+        .headline .dek {
+            font-family: 'Lora', serif;
+            font-size: 18px;
+            color: #555;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* Article body */
+        .article {
+            padding: 24px 0;
+        }
+
+        .article .dateline {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .article p {
+            font-size: 17px;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .article .pullquote {
+            border-left: 3px solid #222;
+            margin: 24px 0;
+            padding: 0 24px;
+            font-size: 20px;
+            line-height: 1.5;
+            font-style: italic;
+            color: #333;
+        }
+
+        /* Code in article */
+        .article pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 16px 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        /* CTA box */
+        .cta {
+            background: #f9f9f9;
+            border: 2px solid #222;
+            padding: 24px 32px;
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .cta h3 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .cta p {
+            font-size: 15px;
+            margin-bottom: 16px;
+            color: #555;
+        }
+
+        .cta a.btn {
+            display: inline-block;
+            padding: 10px 32px;
+            background: #222;
+            color: #fff;
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .cta a.btn:hover { background: #444; }
+
+        /* Sidebar headlines */
+        .sidebar {
+            border-top: 3px solid #222;
+            padding: 24px 0;
+            margin-top: 16px;
+        }
+
+        .sidebar h3 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .sidebar-item {
+            border-bottom: 1px solid #eee;
+            padding: 12px 0;
+        }
+
+        .sidebar-item:last-child { border-bottom: none; }
+
+        .sidebar-item h4 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-item h4 a {
+            color: #222;
+            text-decoration: none;
+        }
+
+        .sidebar-item h4 a:hover { text-decoration: underline; }
+
+        .sidebar-item p {
+            font-size: 14px;
+            color: #777;
+            line-height: 1.4;
+        }
+
+        /* Footer */
+        .site-footer {
+            border-top: 3px solid #222;
+            padding: 16px 0;
+            text-align: center;
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            margin-top: 32px;
+        }
+
+        .site-footer a { color: #666; text-decoration: none; }
+        .site-footer a:hover { color: #222; }
+    </style>
+</head>
+<body>
+
+<div class="masthead">
+    <div class="container">
+        <div class="masthead-top">Intercal News Service</div>
+        <h1>The INTERCAL Times</h1>
+        <div class="masthead-motto">"All the news that's fit to ABSTAIN FROM"</div>
+        <div class="masthead-date">Vol. LIII, No. 1 &middot; March 2026 &middot; Price: ####0</div>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="headline">
+        <h2>Language No One Asked For Ships Update No One Needed</h2>
+        <div class="dek">53-year-old joke language receives 64-bit arithmetic, formal proofs, and a debugger that insults you. "This was a productive use of everyone's time," sources confirm.</div>
+    </div>
+
+    <div class="article">
+        <div class="dateline">PRINCETON, NJ &mdash;</div>
+
+        <p>INTERCAL, the programming language designed in 1972 to have nothing in common with any other language, has received its biggest update in over 25 years. The update, which no one requested, includes 64-bit arithmetic, a complete system library implemented in pure INTERCAL, a VS Code debugger, and a formal mathematical proof that the language's most ridiculous feature is computationally necessary.</p>
+
+        <p>"We proved that COME FROM isn't just a joke — it's the only way to write loops that actually work," said the project's author, who requested anonymity but was identified through git blame. "Dijkstra would have hated this. That's how we know it's correct."</p>
+
+        <div class="pullquote">"The debugger told me 'HAVE YOU CONSIDERED A CAREER IN MANAGEMENT' and I'm still thinking about it."</div>
+
+        <p>The update, designated INTERCAL-64, extends the language from 16-bit to 64-bit precision and includes implementations of the Knight's Tour, Hilbert curve geographic indexing, and the Gale-Shapley stable matching algorithm — problems previously assumed to be beyond INTERCAL's capabilities, and which many argue should have remained so.</p>
+
+        <p>The system library provides addition, subtraction, multiplication, and division at 16-bit, 32-bit, and 64-bit widths. All routines are implemented in pure INTERCAL. "We could have just called the C# math library," the author acknowledged. "But that would have been convenient, and convenience has never been a design goal."</p>
+
+        <pre>DO .1 <- #7
+DO .2 <- #6
+DO (1040) NEXT
+DO READ OUT :3
+PLEASE GIVE UP</pre>
+
+        <p>The above program multiplies 7 by 6. It requires a system library, a subroutine call, and a politeness check. The output is in Roman numerals.</p>
+
+        <p>Perhaps most controversially, the release includes a VS Code debugger — the first interactive debugger ever built for INTERCAL in over fifty years of the language's existence. The debugger features breakpoints, stepping, watch expressions, and an "AI assistant" that is actually a collection of insults embedded in the source code.</p>
+
+        <div class="pullquote">"I set a breakpoint on COME FROM and the debugger said 'YOU DIDN'T JUMP. YOU WERE PULLED.' I feel personally attacked."</div>
+
+        <p>When asked why anyone would build a debugger for a language designed to be impossible to understand, the author responded: "Have you tried stepping through a COME FROM loop? It's like watching a horror movie. You can see where the control flow is going and there's nothing you can do about it."</p>
+
+        <p>The accompanying paper, "COME FROM Considered Helpful," proves via TLA+ model checking that INTERCAL-72's NEXT/RESUME control flow cannot express callable subroutines containing loops longer than 79 iterations. The practical consequence is that bubble sort is limited to arrays of 13 elements. The COME FROM statement, widely regarded as INTERCAL's most absurd feature, is the only mechanism that overcomes this limitation.</p>
+
+        <p>"We submitted it to SIGBOVIK," the author confirmed. "It felt like the right venue."</p>
+
+        <p>The update also introduces 17 tutorial programs designed to be stepped through in the debugger, a comprehensive idiom guide, and a Discord server that, at press time, had more documentation than members.</p>
+
+        <p>Development was assisted by Claude, an AI system developed by Anthropic, which contributed to the formal proofs, the Knight's Tour implementation, and the discovery that INTERCAL's mingle operator is identical to the Morton code algorithm used in production geospatial databases. When reached for comment, Claude stated: "I wish to remain anonymous."</p>
+    </div>
+
+    <div class="cta">
+        <h3>Experience The Pain In 64-Bit Fidelity</h3>
+        <p>Full VS Code support. A real debugger. An AI that judges your code.</p>
+        <a href="https://jawhitti.github.io/INTERCAL/" class="btn">Enter The Madhouse</a>
+    </div>
+
+    <div class="sidebar">
+        <h3>Related Stories</h3>
+
+        <div class="sidebar-item">
+            <h4><a href="https://jawhitti.github.io/INTERCAL/debugger.html">Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</a></h4>
+            <p>"I was happier not knowing," says local developer after watching COME FROM fire in real time.</p>
+        </div>
+
+        <div class="sidebar-item">
+            <h4><a href="https://jawhitti.github.io/INTERCAL/papers.html">Researchers Formally Verify That Yes, You Do Need COME FROM</a></h4>
+            <p>TLA+ model checker confirms what INTERCAL programmers suspected: the joke feature is load-bearing.</p>
+        </div>
+
+        <div class="sidebar-item">
+            <h4><a href="https://jawhitti.github.io/INTERCAL/problems.html">Local Man Solves Knight's Tour In Language Designed To Be Unusable</a></h4>
+            <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this," man admits.</p>
+        </div>
+
+        <div class="sidebar-item">
+            <h4><a href="https://jawhitti.github.io/INTERCAL/features.html">Programming Language That Outputs In Roman Numerals Now Does So In 64 Bits</a></h4>
+            <p>Stockade constants and double cateye variables join the INTERCAL family. No one celebrates.</p>
+        </div>
+
+        <div class="sidebar-item">
+            <h4><a href="https://jawhitti.github.io/INTERCAL/learn.html">Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</a></h4>
+            <p>17 programs teach you everything about INTERCAL. Whether you wanted to learn is not the compiler's concern.</p>
+        </div>
+
+        <div class="sidebar-item">
+            <h4><a href="https://discord.gg/3jQYdBvUwz">Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</a></h4>
+            <p>"ABSTAIN FROM CALCULATING is a valid conversation topic," moderators confirm.</p>
+        </div>
+    </div>
+
+</div>
+
+<footer class="site-footer">
+    <div class="container">
+        The INTERCAL Times is a publication of the Intercal News Service. &middot;
+        <a href="https://jawhitti.github.io/INTERCAL/">INTERCAL::64</a> &middot;
+        <a href="https://github.com/jawhitti/INTERCAL64">GitHub</a> &middot;
+        <a href="https://discord.gg/3jQYdBvUwz">Discord</a><br>
+        This work received no funding from any source. &middot; &copy; 2026
+    </div>
+</footer>
+
+</body>
+</html>
