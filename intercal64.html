@@ -58,59 +58,111 @@
             display: inline-block;
         }
 
-        /* Wide container */
-        .container-wide {
-            max-width: 1100px;
+        /* Three-column layout */
+        .three-col {
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 24px 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 24px;
         }
 
-        .container {
-            max-width: 780px;
-            margin: 0 auto;
-            padding: 0 20px;
+        @media (max-width: 900px) {
+            .three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Side columns */
+        .side-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .col-heading {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #222;
+        }
+
+        .side-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 16px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: border-color 0.15s ease;
+        }
+
+        .side-card:hover { border-color: #222; }
+
+        .side-card h4 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            color: #222;
+        }
+
+        .side-card p {
+            font-size: 12px;
+            color: #777;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* Center column */
+        .center-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
         }
 
         /* Main headline */
         .headline {
             text-align: center;
-            padding: 40px 0 24px;
+            padding: 24px 24px 20px;
             background: #fff;
-            border-bottom: 1px solid #ddd;
+            border: 1px solid #ddd;
+            border-bottom: none;
         }
 
         .headline h2 {
             font-family: 'Libre Franklin', sans-serif;
-            font-size: clamp(24px, 4vw, 40px);
+            font-size: clamp(22px, 3vw, 36px);
             font-weight: 900;
             line-height: 1.15;
-            margin-bottom: 12px;
-            max-width: 780px;
-            margin-left: auto;
-            margin-right: auto;
+            margin-bottom: 10px;
         }
 
         .headline .dek {
             font-family: 'Lora', serif;
-            font-size: 18px;
+            font-size: 16px;
             color: #555;
             line-height: 1.5;
             font-style: italic;
-            max-width: 680px;
-            margin: 0 auto;
         }
 
         /* Hero image */
         .hero-img {
             background: #fff;
-            padding: 24px 0;
+            padding: 0 24px 16px;
             text-align: center;
-            border-bottom: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
         }
 
         .hero-img img {
-            max-width: 780px;
-            width: 100%;
+            max-width: 100%;
             border: 1px solid #ddd;
         }
 
@@ -122,23 +174,12 @@
             font-style: italic;
         }
 
-        /* Two-column layout */
-        .columns {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 32px;
-            padding: 32px 0;
-        }
-
-        @media (max-width: 768px) {
-            .columns { grid-template-columns: 1fr; }
-        }
-
         /* Article body */
         .article {
             background: #fff;
             border: 1px solid #ddd;
-            padding: 32px;
+            border-top: none;
+            padding: 24px;
         }
 
         .article .dateline {
@@ -151,16 +192,16 @@
         }
 
         .article p {
-            font-size: 17px;
+            font-size: 16px;
             line-height: 1.7;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .article .pullquote {
             border-left: 3px solid #222;
-            margin: 24px 0;
-            padding: 0 24px;
-            font-size: 20px;
+            margin: 20px 0;
+            padding: 0 20px;
+            font-size: 18px;
             line-height: 1.5;
             font-style: italic;
             color: #333;
@@ -169,93 +210,45 @@
         .article pre {
             background: #f5f5f5;
             border: 1px solid #ddd;
-            padding: 16px 20px;
+            padding: 14px 18px;
             font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
+            font-size: 13px;
             line-height: 1.5;
             overflow-x: auto;
-            margin: 20px 0;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .sidebar-heading {
-            font-family: 'Libre Franklin', sans-serif;
-            font-weight: 900;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #999;
-            padding-bottom: 8px;
-            border-bottom: 3px solid #222;
-        }
-
-        .sidebar-card {
-            background: #fff;
-            border: 1px solid #ddd;
-            padding: 16px 20px;
-            text-decoration: none;
-            color: inherit;
-            display: block;
-            transition: border-color 0.15s ease;
-        }
-
-        .sidebar-card:hover {
-            border-color: #222;
-        }
-
-        .sidebar-card h4 {
-            font-family: 'Libre Franklin', sans-serif;
-            font-weight: 700;
-            font-size: 15px;
-            line-height: 1.3;
-            margin-bottom: 6px;
-            color: #222;
-        }
-
-        .sidebar-card p {
-            font-size: 13px;
-            color: #777;
-            line-height: 1.4;
-            margin: 0;
+            margin: 18px 0;
         }
 
         /* CTA box */
         .cta {
             background: #fff;
             border: 2px solid #222;
-            padding: 24px 32px;
-            margin: 32px 0;
+            padding: 20px 24px;
+            margin: 24px 0 0;
             text-align: center;
         }
 
         .cta h3 {
             font-family: 'Libre Franklin', sans-serif;
             font-weight: 900;
-            font-size: 18px;
+            font-size: 16px;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .cta p {
-            font-size: 15px;
-            margin-bottom: 16px;
+            font-size: 14px;
+            margin-bottom: 12px;
             color: #555;
         }
 
         .cta a.btn {
             display: inline-block;
-            padding: 10px 32px;
+            padding: 8px 28px;
             background: #222;
             color: #fff;
             font-family: 'Libre Franklin', sans-serif;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             text-decoration: none;
@@ -272,7 +265,6 @@
             font-family: 'Libre Franklin', sans-serif;
             font-size: 11px;
             color: #999;
-            margin-top: 0;
             background: #fff;
         }
 
@@ -283,26 +275,45 @@
 <body>
 
 <div class="masthead">
-    <div class="container">
-        <div class="masthead-top">Intercal News Service</div>
-        <h1>The INTERCAL Times</h1>
-        <div class="masthead-motto">"All the news that's fit to ABSTAIN FROM"</div>
-        <div class="masthead-date">Vol. LIII, No. 1 &middot; March 2026 &middot; Price: ####0</div>
+    <div class="masthead-top">Intercal News Service</div>
+    <h1>The Daily Blogspam</h1>
+    <div class="masthead-motto">"All the news that's fit to ABSTAIN FROM"</div>
+    <div class="masthead-date">Vol. LIII, No. 1 &middot; March 2026 &middot; Price: ####0</div>
+</div>
+
+<div class="three-col">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="side-col">
+        <div class="col-heading">Trending</div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/debugger.html" class="side-card">
+            <h4>Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</h4>
+            <p>"I was happier not knowing," says local developer.</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/papers.html" class="side-card">
+            <h4>Researchers Formally Verify That Yes, You Do Need COME FROM</h4>
+            <p>TLA+ model checker confirms the joke feature is load-bearing.</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/" class="side-card">
+            <h4>Area Man Neglects Family, Ships Compiler</h4>
+            <p>"He's been muttering about COME FROM loops in his sleep."</p>
+        </a>
     </div>
-</div>
 
-<div class="headline">
-    <h2>Language No One Asked For Ships Update No One Needed</h2>
-    <div class="dek">53-year-old joke language receives 64-bit arithmetic, formal proofs, and a debugger that insults you. "This was a productive use of everyone's time," sources confirm.</div>
-</div>
+    <!-- CENTER COLUMN -->
+    <div class="center-col">
+        <div class="headline">
+            <h2>Language No One Asked For Ships Update No One Needed</h2>
+            <div class="dek">53-year-old joke language receives 64-bit arithmetic, formal proofs, and a debugger that insults you. "This was a productive use of everyone's time," sources confirm.</div>
+        </div>
 
-<div class="hero-img">
-    <img src="intercal64-hero.png" alt="INTERCAL-64 in VS Code: breakpoint hit on a POPCOUNT implementation with 64-bit stockade constants">
-    <div class="caption">A breakpoint pauses execution mid-POPCOUNT. The stockade constants are 18 digits long. This is fine.</div>
-</div>
-
-<div class="container-wide">
-    <div class="columns">
+        <div class="hero-img">
+            <img src="intercal64-hero.png" alt="INTERCAL-64 in VS Code">
+            <div class="caption">A breakpoint pauses execution mid-POPCOUNT. The stockade constants are 18 digits long. This is fine.</div>
+        </div>
 
         <div class="article">
             <div class="dateline">PRINCETON, NJ &mdash;</div>
@@ -345,57 +356,41 @@ PLEASE GIVE UP</pre>
                 <a href="https://jawhitti.github.io/INTERCAL/" class="btn">Enter The Madhouse</a>
             </div>
         </div>
-
-        <div class="sidebar">
-            <div class="sidebar-heading">Related Stories</div>
-
-            <a href="https://jawhitti.github.io/INTERCAL/debugger.html" class="sidebar-card">
-                <h4>Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</h4>
-                <p>"I was happier not knowing," says local developer after watching COME FROM fire in real time.</p>
-            </a>
-
-            <a href="https://jawhitti.github.io/INTERCAL/papers.html" class="sidebar-card">
-                <h4>Researchers Formally Verify That Yes, You Do Need COME FROM</h4>
-                <p>TLA+ model checker confirms what INTERCAL programmers suspected: the joke feature is load-bearing.</p>
-            </a>
-
-            <a href="https://jawhitti.github.io/INTERCAL/problems.html" class="sidebar-card">
-                <h4>Local Man Solves Knight's Tour In Language Designed To Be Unusable</h4>
-                <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this," man admits.</p>
-            </a>
-
-            <a href="https://jawhitti.github.io/INTERCAL/features.html" class="sidebar-card">
-                <h4>Area Woman Concerned This Actually Seems To Be Real</h4>
-                <p>"There's a formal proof. There's a debugger. There are papers. I think they're serious," reports visibly shaken computer scientist.</p>
-            </a>
-
-            <a href="https://jawhitti.github.io/INTERCAL/learn.html" class="sidebar-card">
-                <h4>Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</h4>
-                <p>17 programs teach you everything about INTERCAL. Whether you wanted to learn is not the compiler's concern.</p>
-            </a>
-
-            <a href="https://jawhitti.github.io/INTERCAL/" class="sidebar-card">
-                <h4>Area Man Neglects Family, Ships Compiler</h4>
-                <p>"He's been muttering about COME FROM loops in his sleep," reports spouse. "I don't know what that means but it sounds bad."</p>
-            </a>
-
-            <a href="https://discord.gg/3jQYdBvUwz" class="sidebar-card">
-                <h4>Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</h4>
-                <p>"ABSTAIN FROM CALCULATING is a valid conversation topic," moderators confirm.</p>
-            </a>
-        </div>
-
     </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="side-col">
+        <div class="col-heading">Also In This Issue</div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/problems.html" class="side-card">
+            <h4>Local Man Solves Knight's Tour In Language Designed To Be Unusable</h4>
+            <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this."</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/features.html" class="side-card">
+            <h4>Area Woman Concerned This Actually Seems To Be Real</h4>
+            <p>"There's a formal proof. There are papers. I think they're serious," reports visibly shaken computer scientist.</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/learn.html" class="side-card">
+            <h4>Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</h4>
+            <p>17 programs. Whether you wanted to learn is not the compiler's concern.</p>
+        </a>
+
+        <a href="https://discord.gg/3jQYdBvUwz" class="side-card">
+            <h4>Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</h4>
+            <p>"ABSTAIN FROM CALCULATING is a valid conversation topic."</p>
+        </a>
+    </div>
+
 </div>
 
 <footer class="site-footer">
-    <div class="container">
-        The INTERCAL Times is a publication of the Intercal News Service. &middot;
-        <a href="https://jawhitti.github.io/INTERCAL/">INTERCAL::64</a> &middot;
-        <a href="https://github.com/jawhitti/INTERCAL64">GitHub</a> &middot;
-        <a href="https://discord.gg/3jQYdBvUwz">Discord</a><br>
-        This work received no funding from any source. &middot; &copy; 2026
-    </div>
+    The Daily Blogspam is a publication of the Intercal News Service. &middot;
+    <a href="https://jawhitti.github.io/INTERCAL/">INTERCAL::64</a> &middot;
+    <a href="https://github.com/jawhitti/INTERCAL64">GitHub</a> &middot;
+    <a href="https://discord.gg/3jQYdBvUwz">Discord</a><br>
+    This work received no funding from any source. &middot; &copy; 2026
 </footer>
 
 </body>
