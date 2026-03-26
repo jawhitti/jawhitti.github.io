@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language No One Asked For Ships Update No One Needed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;700;900&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lora', Georgia, serif;
+            background: #f4f4f0;
+            color: #222;
+        }
+
+        /* Masthead */
+        .masthead {
+            text-align: center;
+            padding: 16px 0 12px;
+            background: #fff;
+            border-bottom: 3px solid #222;
+        }
+
+        .masthead-top {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .masthead h1 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 900;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+
+        .masthead-motto {
+            font-family: 'Lora', serif;
+            font-style: italic;
+            font-size: 13px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .masthead-date {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #ddd;
+            display: inline-block;
+        }
+
+        /* Three-column layout */
+        .three-col {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .three-col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Side columns */
+        .side-col {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .col-heading {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            padding-bottom: 8px;
+            border-bottom: 3px solid #222;
+        }
+
+        .side-card {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 16px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            transition: border-color 0.15s ease;
+        }
+
+        .side-card:hover { border-color: #222; }
+
+        .side-card h4 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 1.3;
+            margin-bottom: 6px;
+            color: #222;
+        }
+
+        .side-card p {
+            font-size: 12px;
+            color: #777;
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        /* Center column */
+        .center-col {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        /* Main headline */
+        .headline {
+            text-align: center;
+            padding: 24px 24px 20px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-bottom: none;
+        }
+
+        .headline h2 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: clamp(22px, 3vw, 36px);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 10px;
+        }
+
+        .headline .dek {
+            font-family: 'Lora', serif;
+            font-size: 16px;
+            color: #555;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* Hero image */
+        .hero-img {
+            background: #fff;
+            padding: 0 24px 16px;
+            text-align: center;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+        }
+
+        .hero-img img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+        }
+
+        .hero-img .caption {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Article body */
+        .article {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: none;
+            padding: 24px;
+        }
+
+        .article .dateline {
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .article p {
+            font-size: 16px;
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        .article .pullquote {
+            border-left: 3px solid #222;
+            margin: 20px 0;
+            padding: 0 20px;
+            font-size: 18px;
+            line-height: 1.5;
+            font-style: italic;
+            color: #333;
+        }
+
+        .article pre {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 14px 18px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            margin: 18px 0;
+        }
+
+        /* CTA box */
+        .cta {
+            background: #fff;
+            border: 2px solid #222;
+            padding: 20px 24px;
+            margin: 24px 0 0;
+            text-align: center;
+        }
+
+        .cta h3 {
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 900;
+            font-size: 16px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .cta p {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #555;
+        }
+
+        .cta a.btn {
+            display: inline-block;
+            padding: 8px 28px;
+            background: #222;
+            color: #fff;
+            font-family: 'Libre Franklin', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .cta a.btn:hover { background: #444; }
+
+        /* Footer */
+        .site-footer {
+            border-top: 3px solid #222;
+            padding: 16px 0;
+            text-align: center;
+            font-family: 'Libre Franklin', sans-serif;
+            font-size: 11px;
+            color: #999;
+            background: #fff;
+        }
+
+        .site-footer a { color: #666; text-decoration: none; }
+        .site-footer a:hover { color: #222; }
+    </style>
+</head>
+<body>
+
+<div class="masthead">
+    <div class="masthead-top">Intercal News Service</div>
+    <h1>Miscommunications of the ACM</h1>
+    <div class="masthead-motto">"All the news that's fit to ABSTAIN FROM"</div>
+    <div class="masthead-date">Vol. LIII, No. 1 &middot; March 2026 &middot; Price: ####0</div>
+</div>
+
+<div class="three-col">
+
+    <!-- LEFT SIDEBAR -->
+    <div class="side-col">
+        <div class="col-heading">Trending</div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/debugger.html" class="side-card">
+            <h4>Area Programmer Reports Debugger 'Made It Worse' By Showing What Code Actually Does</h4>
+            <p>"I was happier not knowing," says local developer.</p>
+        </a>
+
+        <div style="background:#1a7f37; padding:20px 16px; text-align:center;">
+            <div style="font-family:'Libre Franklin',sans-serif; font-weight:900; font-size:14px; text-transform:uppercase; color:#fff; margin-bottom:8px;">GIMME</div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-bottom:12px;">Install INTERCAL-64. Open VS Code. Press F5. Regret everything.</div>
+            <a href="https://jawhitti.github.io/INTERCAL/install.html" style="display:inline-block; padding:8px 20px; background:#fff; color:#1a7f37; font-family:'Libre Franklin',sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; text-decoration:none;">Install Now</a>
+        </div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/papers.html" class="side-card">
+            <h4>VS Code Doesn't Deserve This, Claim Outraged Citizens</h4>
+            <p>"It was a perfectly good editor before this," says petition organizer.</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/" class="side-card">
+            <h4>Area Man Neglects Family, Ships Compiler</h4>
+            <p>"He's been muttering about COME FROM loops in his sleep."</p>
+        </a>
+    </div>
+
+    <!-- CENTER COLUMN -->
+    <div class="center-col">
+        <div class="headline">
+            <h2>Language No One Asked For Ships Update No One Needed</h2>
+            <div class="dek">Announcement of 64-bit INTERCAL compiler and debugger stuns industry watchers. "I didn't think I wanted this," said onlooker, "but now that I see it, I <em>definitely</em> don't want it."</div>
+        </div>
+
+        <a href="topstory.html" class="hero-img" style="display:block; text-decoration:none; color:inherit;">
+            <img src="https://jawhitti.github.io/INTERCAL/intercal64-hero2.png" alt="INTERCAL-64 in VS Code">
+            <div class="caption">Screenshot of bewildering new language running in VS Code, for some reason. <strong>Read the full story &rarr;</strong></div>
+        </a>
+
+        <div class="cta">
+            <h3>Experience The Pain In 64-Bit Fidelity</h3>
+            <p>Full VS Code support. A real debugger. An AI that judges your code.</p>
+            <a href="https://jawhitti.github.io/INTERCAL/" class="btn">Yes It Is Real, Actually.</a>
+        </div>
+    </div>
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="side-col">
+        <div class="col-heading">Also In This Issue</div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/problems.html" class="side-card">
+            <h4>Local Man Solves Knight's Tour In Language Designed To Be Unusable</h4>
+            <p>570 lines. 64 squares. 30 seconds. "I don't know why I did this."</p>
+        </a>
+
+        <div style="background:#5865F2; padding:20px 16px; text-align:center;">
+            <div style="font-family:'Libre Franklin',sans-serif; font-weight:900; font-size:14px; text-transform:uppercase; color:#fff; margin-bottom:8px;">Join The Discord</div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.85); margin-bottom:12px;">Ask questions. Share code. Complain about the syntax. We understand.</div>
+            <a href="https://discord.gg/3jQYdBvUwz" style="display:inline-block; padding:8px 20px; background:#fff; color:#5865F2; font-family:'Libre Franklin',sans-serif; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.1em; text-decoration:none;">Join Now</a>
+        </div>
+
+        <a href="https://jawhitti.github.io/INTERCAL/features.html" class="side-card">
+            <h4>Area Woman Concerned This Actually Seems To Be Real</h4>
+            <p>"There's a formal proof. There are papers. I think they're serious," reports visibly shaken computer scientist.</p>
+        </a>
+
+        <a href="https://jawhitti.github.io/INTERCAL/learn.html" class="side-card">
+            <h4>Nation's Most Unnecessary Tutorial Now Available For Nation's Most Unnecessary Language</h4>
+            <p>17 programs. Whether you wanted to learn is not the compiler's concern.</p>
+        </a>
+
+        <a href="https://discord.gg/3jQYdBvUwz" class="side-card">
+            <h4>Discord Server For Language With Fewer Than 100 Living Programmers Opens To General Public</h4>
+            <p>"ABSTAIN FROM CALCULATING is a valid conversation topic."</p>
+        </a>
+    </div>
+
+</div>
+
+<footer class="site-footer">
+    Miscommunications of the ACM is a publication of the Intercal News Service. &middot;
+    <a href="https://jawhitti.github.io/INTERCAL/">INTERCAL::64</a> &middot;
+    <a href="https://github.com/jawhitti/INTERCAL64">GitHub</a> &middot;
+    <a href="https://discord.gg/3jQYdBvUwz">Discord</a><br>
+    This work received no funding from any source. &middot; &copy; 2026
+</footer>
+
+</body>
+</html>
