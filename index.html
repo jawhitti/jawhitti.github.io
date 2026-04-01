@@ -73,15 +73,11 @@
             gap: 12px;
             margin-bottom: 32px;
         }
-        @media (max-width: 900px) {
-            .showcase { grid-template-columns: 1fr; }
-        }
-
         .sidebar {
             display: flex;
             flex-direction: column;
             gap: 8px;
-            grid-row: 1 / 2;
+            order: -1;
         }
         .sidebar a {
             display: block;
@@ -107,7 +103,6 @@
         }
 
         .screenshot {
-            grid-row: 1 / 2;
             border: 1px solid #b0d9b8;
             border-radius: 8px;
             overflow: hidden;
@@ -122,9 +117,6 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
-        }
-        @media (max-width: 900px) {
-            .bottom-cards { grid-template-columns: 1fr 1fr; }
         }
         .bottom-cards a {
             display: block;
@@ -147,6 +139,45 @@
             font-size: 12px;
             color: #656d76;
             line-height: 1.4;
+        }
+
+        .section-header-grid {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        /* Responsive: tablet/small laptop */
+        @media (max-width: 1100px) {
+            .showcase {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto;
+            }
+            .sidebar {
+                order: 0;
+            }
+            .screenshot {
+                max-height: 50vh;
+            }
+            .screenshot img {
+                height: 100%;
+                object-fit: cover;
+                object-position: top left;
+            }
+            .bottom-cards { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; }
+            .section-sub { grid-column: 1 / -1 !important; }
+            .section-header-grid { grid-template-columns: 1fr; }
+            .section-header-grid div:first-child { display: none; }
+        }
+        /* Responsive: phone */
+        @media (max-width: 600px) {
+            .bottom-cards { grid-template-columns: 1fr !important; }
+            .topbar .wrap { flex-direction: column; gap: 8px; }
+            .topbar nav a { margin-left: 12px; font-size: 12px; }
+            .topbar nav a:first-child { margin-left: 0; }
+            .hero { padding: 16px 16px; }
+            .comparison { padding: 0 16px 24px; }
+            .install-section { padding: 0 16px 32px; }
         }
 
         /* Code comparison */
@@ -272,12 +303,16 @@
         </div>
     </div>
 
-    <div style="display:grid; grid-template-columns:200px 1fr; gap:12px; margin-bottom:12px;">
+    <div class="section-header-grid">
         <div></div>
         <div style="font-size:13px; text-transform:uppercase; letter-spacing:0.15em; color:#656d76; font-weight:600;">A complete development environment</div>
     </div>
 
     <div class="showcase">
+        <div class="screenshot">
+            <img src="https://jawhitti.github.io/INTERCAL/intercal64-hero2.png" alt="INTERCAL-64 debugger in VS Code">
+        </div>
+
         <div class="sidebar">
             <a href="https://jawhitti.github.io/INTERCAL/features.html">
                 <h4><i class="fas fa-puzzle-piece"></i> Language Extensions</h4>
@@ -317,13 +352,9 @@
             </a>
         </div>
 
-        <div class="screenshot">
-            <img src="https://jawhitti.github.io/INTERCAL/intercal64-hero2.png" alt="INTERCAL-64 debugger in VS Code">
-        </div>
+        <div class="section-sub" style="font-size:13px; text-transform:uppercase; letter-spacing:0.15em; color:#656d76; margin-top:4px; font-weight:600;">New language, new problems</div>
 
-        <div style="grid-column: 2 / -1; font-size:13px; text-transform:uppercase; letter-spacing:0.15em; color:#656d76; margin-top:4px; font-weight:600;">New language, new problems</div>
-
-        <div class="bottom-cards" style="grid-column: 2 / -1;">
+        <div class="bottom-cards">
             <a href="https://jawhitti.github.io/INTERCAL/problems.html">
                 <h4><i class="fas fa-chess-knight"></i> Knight's Tour</h4>
                 <p>Warnsdorff's algorithm in 570 lines of INTERCAL. All 64 squares.</p>
