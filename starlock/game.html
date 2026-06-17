@@ -70,6 +70,9 @@
  .winstars{font-size:34px;margin:4px 0 2px;color:#ffce42;letter-spacing:5px;text-shadow:0 0 10px rgba(255,206,66,.5);}
  .winsub{color:#9fd0ff;font-size:14px;margin-bottom:15px;}
  .winbtns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+ #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a2433;color:#cfe;
+   border:1px solid #3a4a5a;padding:10px 18px;border-radius:8px;opacity:0;transition:opacity .3s;
+   pointer-events:none;font-size:14px;z-index:40;}
 </style></head><body>
 <h1>STARLOCK</h1>
 <div id="hud"><span class="hudbox">⏱ <b id="clock">0:00.0</b></span><span class="hudbox">☠ retries <b id="retries">0</b></span></div>
@@ -79,6 +82,7 @@
 <div id="status"></div>
 <div id="pad"></div>
 <div id="ctrls"><span onclick="hint()">💡 hint</span><span onclick="giveup()">🏳 give up</span><span onclick="restart()">↻ restart</span></div>
+<div id="toast"></div>
 <script>
 const BOARD = {"nRows": 3, "nCols": 3, "keyMul": 4096, "doors": [[0, 1], [0, 3], [1, 2], [1, 4], [2, 5], [3, 4], [3, 6], [4, 5], [4, 7], [5, 8], [6, 7], [7, 8]], "initDoors": [true, false, false, false, true, false, false, true, false, true, true, false], "buttons": [{"room": 3, "wires": [{"d": 2, "e": "open"}, {"d": 1, "e": "open"}, {"d": 11, "e": "toggle"}]}, {"room": 5, "wires": [{"d": 2, "e": "open"}]}, {"room": 6, "wires": [{"d": 6, "e": "toggle"}, {"d": 8, "e": "open"}, {"d": 11, "e": "open"}]}, {"room": 3, "wires": [{"d": 2, "e": "toggle"}]}, {"room": 4, "wires": [{"d": 1, "e": "toggle"}]}, {"room": 0, "wires": [{"d": 0, "e": "toggle"}, {"d": 1, "e": "open"}, {"d": 9, "e": "close"}]}, {"room": 2, "wires": [{"d": 6, "e": "open"}, {"d": 1, "e": "open"}]}, {"room": 1, "wires": [{"d": 6, "e": "toggle"}, {"d": 8, "e": "close"}, {"d": 9, "e": "toggle"}]}, {"room": 2, "wires": [{"d": 6, "e": "close"}, {"d": 8, "e": "open"}]}, {"room": 5, "wires": [{"d": 8, "e": "close"}, {"d": 7, "e": "toggle"}]}, {"room": 7, "wires": [{"d": 6, "e": "open"}, {"d": 4, "e": "close"}, {"d": 7, "e": "close"}]}, {"room": 6, "wires": [{"d": 11, "e": "close"}]}, {"room": 8, "wires": [{"d": 9, "e": "close"}, {"d": 0, "e": "close"}, {"d": 6, "e": "open"}]}, {"room": 5, "wires": [{"d": 7, "e": "close"}, {"d": 11, "e": "close"}, {"d": 8, "e": "close"}]}, {"room": 1, "wires": [{"d": 4, "e": "toggle"}, {"d": 8, "e": "toggle"}]}, {"room": 5, "wires": [{"d": 9, "e": "close"}]}], "start": 0, "goal": 8, "par": 9, "solution": [["walk", 1], ["press", 7], ["walk", 0], ["press", 5], ["walk", 3], ["walk", 6], ["press", 2], ["walk", 7], ["walk", 8]]};
 const TRAPS = new Set([21570, 21574, 21698, 21568, 23554, 21506, 23622, 21571, 21702, 17602, 21572, 21696, 23558, 21510, 23682, 21634, 23552, 21504, 23618, 23750, 23620, 21575, 21699, 21569, 23555, 21507, 23623, 23875, 23751, 17606, 17600, 21700, 23686, 21638, 19586, 17538, 23556, 21508, 23680, 21632, 23746, 23616, 19654, 23748, 21703, 17603, 21573, 21697, 23559, 21511, 23683, 21635, 23553, 21505, 23619, 23621, 23879, 23747, 19655, 17604, 19590, 17542, 19584, 17536, 23684, 21636, 19650, 23744, 19652, 17607, 17601, 21701, 23687, 21639, 19587, 17539, 23557, 21509, 23681, 21633, 23617, 23749, 23811, 19651, 19653, 19588, 17540, 19648, 17605, 19591, 17543, 19585, 17537, 23685, 21637, 23745, 23815, 23873, 19649, 19589, 17541, 23877, 23809, 23813, 23878, 23876, 23814, 23812, 23874, 23810, 23872, 23808]);
@@ -91,7 +95,8 @@ const COLORS = ['#ff5a5f','#3fa9f5','#ffce42','#4ad991','#b06bff','#ff9442','#22
                 '#ff6fae','#7ad13a','#5b7bff','#ff7b39','#19c0a8','#e34bd9','#46e0c0','#9ad62f','#5ad1ff'];
 let rooms=[], doorEls={}, avatar=null, overlay=null, winov=null, started=false;
 let room, doors, moves, done, dead;
-let retries=0, startTime=null, winTime=null, timerId=null, botMode=false, botFin=false, botTimer=null, botIdx=0;
+let retries=0, startTime=null, winTime=null, timerId=null, botMode=false, botFin=false, botTimer=null;
+let log=[], playArr=null, playIdx=0, playLabel='', sharedReplay=false;
 
 function fmt(ms){ const s=ms/1000, m=Math.floor(s/60), r=s-m*60; return m+':'+(r<10?'0':'')+r.toFixed(1); }
 function hud(){ document.getElementById('retries').textContent=retries;
@@ -137,8 +142,10 @@ function update(){
   document.body.classList.toggle('dead', !!dead);
   overlay.style.display = (started||botMode||botFin) ? 'none' : 'flex';
   const st=document.getElementById('status');
-  if(botMode) st.innerHTML='<span class="win">🤖 watching the par line…</span>';
-  else if(botFin) st.innerHTML='<span class="win">🤖 the bot escaped in '+BOARD.solution.length+' moves — restart to try again</span>';
+  if(botMode) st.innerHTML='<span class="win">▶ watching '+playLabel+'…</span>';
+  else if(botFin) st.innerHTML = sharedReplay
+     ? '<span class="win">▶ shared run — '+playArr.length+' moves &middot; <u style="cursor:pointer" onclick="freshGame()">play it yourself</u></span>'
+     : '<span class="win">🤖 the bot escaped in '+BOARD.solution.length+' moves &middot; <u style="cursor:pointer" onclick="restart()">restart</u></span>';
   else if(dead) st.innerHTML='<span class="die">☠ TRAPPED — you die.</span>';
   else if(done) st.textContent='';
   else st.textContent = started ? 'moves '+moves : 'press START to begin';
@@ -146,7 +153,8 @@ function update(){
      winov.innerHTML='<div class="wincard"><div class="wintitle">★ ESCAPED</div>'+
         '<div class="winstars">'+'★'.repeat(k)+'☆'.repeat(3-k)+'</div>'+
         '<div class="winsub">'+moves+' moves &middot; par '+BOARD.par+' &middot; ⏱ '+fmt((winTime||performance.now())-startTime)+'</div>'+
-        '<div class="winbtns"><button class="botbtn" onclick="bot()">🤖 watch the bot ('+BOARD.par+')</button>'+
+        '<div class="winbtns"><button class="botbtn" onclick="share()">📤 share</button>'+
+        '<button class="botbtn" onclick="bot()">🤖 watch the bot ('+BOARD.par+')</button>'+
         '<button class="botbtn" onclick="restart()">↻ play again</button></div></div>';
      winov.style.display='flex';
   } else winov.style.display='none';
@@ -160,27 +168,38 @@ function update(){
   hud();
 }
 
-function walk(to){ if(!started||done||dead||botMode||botFin||!canWalk(to))return; room=to; moves++;
+function walk(to){ if(!started||done||dead||botMode||botFin||!canWalk(to))return; room=to; moves++; log.push(['walk',to]);
    if(room==BOARD.goal){ done=true; winTime=performance.now(); if(timerId){clearInterval(timerId);timerId=null;} update(); return; }
    if(checkDeath())return; update(); }
 function press(bi){ if(!started||done||dead||botMode||botFin)return; for(const w of BOARD.buttons[bi].wires){
      if(w.e=='open')doors[w.d]=true; else if(w.e=='close')doors[w.d]=false; else doors[w.d]=!doors[w.d]; }
-   moves++; if(checkDeath())return; update(); }
+   moves++; log.push(['press',bi]); if(checkDeath())return; update(); }
 function checkDeath(){ if(!done && !dead && TRAPS.has(stateKey())){ dead=true; update();
    setTimeout(()=>{ retries++; reset(false); }, 1400); return true; } return false; }
-function reset(fresh){ room=BOARD.start; doors=BOARD.initDoors.slice(); moves=0; done=false; dead=false; botMode=false; botFin=false; stopBot();
+function reset(fresh){ room=BOARD.start; doors=BOARD.initDoors.slice(); moves=0; log=[]; done=false; dead=false; botMode=false; botFin=false; stopBot();
    if(fresh){ started=false; retries=0; startTime=null; winTime=null; if(timerId){clearInterval(timerId);timerId=null;} }
    update(); }
 function begin(){ if(started)return; started=true; startClock(); update(); }
 function restart(){ reset(true); }
 function rating(){ let s=3; if(retries>0)s--; if(moves>BOARD.par*1.5)s--; return Math.max(1,s); }
 function stopBot(){ if(botTimer){clearInterval(botTimer);botTimer=null;} }
-function bot(){ stopBot(); room=BOARD.start; doors=BOARD.initDoors.slice(); dead=false; done=false; botFin=false; botMode=true; botIdx=0;
-   if(timerId){clearInterval(timerId);timerId=null;} update(); botTimer=setInterval(botStep,650); }
-function botStep(){ if(botIdx>=BOARD.solution.length){ stopBot(); botMode=false; botFin=true; update(); return; }
-   const a=BOARD.solution[botIdx++]; if(a[0]=='walk') room=a[1];
+function startPlay(arr,label,shared){ stopBot(); playArr=arr; playIdx=0; playLabel=label; sharedReplay=!!shared;
+   room=BOARD.start; doors=BOARD.initDoors.slice(); dead=false; done=false; botFin=false; botMode=true;
+   if(timerId){clearInterval(timerId);timerId=null;} update(); botTimer=setInterval(playStep,650); }
+function playStep(){ if(playIdx>=playArr.length){ stopBot(); botMode=false; botFin=true; update(); return; }
+   const a=playArr[playIdx++]; if(a[0]=='walk') room=a[1];
    else for(const w of BOARD.buttons[a[1]].wires){ if(w.e=='open')doors[w.d]=true; else if(w.e=='close')doors[w.d]=false; else doors[w.d]=!doors[w.d]; }
    update(); }
+function bot(){ startPlay(BOARD.solution,'the par line',false); }
+function freshGame(){ if(location.hash) history.replaceState(null,'',location.pathname); sharedReplay=false; reset(true); }
+function enc(seq){ return seq.map(a=> String.fromCharCode((a[0]=='walk'?97:65)+a[1])).join(''); }
+function dec(s){ const o=[]; for(const c of s){ const k=c.charCodeAt(0); o.push(k>=97?['walk',k-97]:['press',k-65]); } return o; }
+function flash(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity='1'; setTimeout(()=>{t.style.opacity='0';},1700); }
+function share(){ const url=location.origin+location.pathname+'#r='+enc(log); const k=rating();
+   const txt='STARLOCK — escaped in '+moves+' moves (par '+BOARD.par+'), '+retries+' deaths, '+fmt((winTime||performance.now())-startTime)+'  '+'★'.repeat(k)+'☆'.repeat(3-k);
+   if(navigator.share){ navigator.share({title:'STARLOCK',text:txt,url:url}).catch(()=>{}); }
+   else if(navigator.clipboard){ navigator.clipboard.writeText(txt+'\n'+url).then(()=>flash('result + replay link copied'),()=>flash('copy blocked — needs https')); }
+   else flash('clipboard unavailable'); }
 function giveup(){ if(started && !done && !dead && !botMode && !botFin) bot(); }
 function solveFrom(r0,m0){ const par={}, K=BOARD.keyMul; par[r0*K+m0]=null; const Q=[[r0,m0]]; let h=0;
    while(h<Q.length){ const pr=Q[h++], rr=pr[0], mm=pr[1];
@@ -203,4 +222,5 @@ document.addEventListener('keydown', e=>{ const k=e.key.toLowerCase(); let h=tru
    else if(k=='arrowleft'||k=='a') move(0,-1); else if(k=='arrowright'||k=='d') move(0,1);
    else h=false; if(h) e.preventDefault(); });
 build(); reset(true);
+{ const hm=location.hash.match(/r=([A-Za-z]+)/); if(hm) startPlay(dec(hm[1]),'a shared run',true); }
 </script></body></html>
