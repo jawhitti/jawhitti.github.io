@@ -1,0 +1,120 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>STARLOCK</title>
+<style>
+ *{box-sizing:border-box;}
+ body{font-family:'Trebuchet MS',system-ui,sans-serif;margin:0;min-height:100vh;
+   background:radial-gradient(1200px 800px at 50% -10%,#1b2a4a,#070b14 70%);color:#cde3ff;
+   display:flex;flex-direction:column;align-items:center;padding:22px;transition:background .15s;}
+ body.dead{background:radial-gradient(1200px 800px at 50% -10%,#5a1620,#1a0608 70%);}
+ h1{letter-spacing:5px;font-size:22px;margin:2px 0 2px;color:#8fd0ff;text-shadow:0 0 14px #2f6fb0;}
+ #hint{color:#5e7da3;font-size:13px;margin-bottom:18px;text-align:center;max-width:440px;}
+ #stage{position:relative;margin:6px 0 8px;}
+ body.dead #stage{animation:shake .4s;}
+ @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
+   40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+ .room{position:absolute;border-radius:16px;background:linear-gradient(160deg,#16243c,#0e1726);
+   border:2px solid #243954;box-shadow:inset 0 0 26px rgba(0,0,0,.55);cursor:default;
+   transition:border-color .2s, box-shadow .2s;}
+ .room.reach{cursor:pointer;border-color:#37e0a0;box-shadow:inset 0 0 26px rgba(0,0,0,.4),0 0 16px rgba(55,224,160,.45);}
+ .room.reach:hover{background:linear-gradient(160deg,#1b3050,#10203a);}
+ .rlabel{position:absolute;top:6px;left:9px;font-size:11px;color:#33506f;letter-spacing:1px;}
+ .goal{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:40px;
+   filter:drop-shadow(0 0 8px #d9a14a);}
+ .door{position:absolute;overflow:hidden;border-radius:5px;background:#05080e;}
+ .panel{position:absolute;background:linear-gradient(180deg,#6d8198,#3d4d63);
+   border:1px solid #8aa3bd;transition:transform .38s cubic-bezier(.55,0,.25,1);}
+ .hdoor .panel{left:0;width:100%;height:51%;}
+ .hdoor .p1{top:0;border-radius:0 0 4px 4px;} .hdoor .p2{bottom:0;border-radius:4px 4px 0 0;}
+ .hdoor.open .p1{transform:translateY(-104%);} .hdoor.open .p2{transform:translateY(104%);}
+ .vdoor .panel{top:0;height:100%;width:51%;}
+ .vdoor .p1{left:0;border-radius:0 4px 4px 0;} .vdoor .p2{right:0;border-radius:4px 0 0 4px;}
+ .vdoor.open .p1{transform:translateX(-104%);} .vdoor.open .p2{transform:translateX(104%);}
+ .avatar{position:absolute;font-size:42px;transform:translate(-50%,-50%);
+   transition:left .26s ease, top .26s ease;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6));pointer-events:none;z-index:5;}
+ #status{min-height:24px;font-size:16px;margin:8px 0 16px;font-weight:600;}
+ .win{color:#37e0a0;text-shadow:0 0 12px #1c7a52;} .die{color:#ff6b78;text-shadow:0 0 12px #a02029;}
+ #pad{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;max-width:520px;min-height:84px;align-items:center;}
+ .bigbtn{width:74px;height:74px;border-radius:50%;border:none;cursor:pointer;
+   box-shadow:0 7px 0 rgba(0,0,0,.35),inset 0 5px 10px rgba(255,255,255,.35),inset 0 -8px 12px rgba(0,0,0,.3);
+   transition:transform .07s, box-shadow .07s;position:relative;}
+ .bigbtn::after{content:"";position:absolute;top:13px;left:16px;width:22px;height:14px;border-radius:50%;
+   background:rgba(255,255,255,.5);filter:blur(2px);}
+ .bigbtn:active{transform:translateY(6px);box-shadow:0 1px 0 rgba(0,0,0,.35),inset 0 5px 10px rgba(255,255,255,.3),inset 0 -8px 12px rgba(0,0,0,.3);}
+ .bigbtn:disabled{opacity:.35;cursor:default;}
+ #pad .empty{color:#4a688c;font-size:14px;}
+ #reset{margin-top:14px;font-size:12px;color:#3f5f80;cursor:pointer;text-decoration:underline;}
+</style></head><body>
+<h1>STARLOCK</h1>
+<div id="hint">get the astronaut to the 🏁 &middot; walk through open doors &middot; press the buttons to move the doors.
+  some help you, some <b>trap you</b>. par <b>9</b>.</div>
+<div id="stage"></div>
+<div id="status"></div>
+<div id="pad"></div>
+<div id="reset" onclick="reset()">restart this board</div>
+<script>
+const BOARD = {"nRows": 3, "nCols": 3, "keyMul": 4096, "doors": [[0, 1], [0, 3], [1, 2], [1, 4], [2, 5], [3, 4], [3, 6], [4, 5], [4, 7], [5, 8], [6, 7], [7, 8]], "initDoors": [true, false, false, false, true, false, false, true, false, true, true, false], "buttons": [{"room": 3, "wires": [{"d": 2, "e": "open"}, {"d": 1, "e": "open"}, {"d": 11, "e": "toggle"}]}, {"room": 5, "wires": [{"d": 2, "e": "open"}]}, {"room": 6, "wires": [{"d": 6, "e": "toggle"}, {"d": 8, "e": "open"}, {"d": 11, "e": "open"}]}, {"room": 3, "wires": [{"d": 2, "e": "toggle"}]}, {"room": 4, "wires": [{"d": 1, "e": "toggle"}]}, {"room": 0, "wires": [{"d": 0, "e": "toggle"}, {"d": 1, "e": "open"}, {"d": 9, "e": "close"}]}, {"room": 2, "wires": [{"d": 6, "e": "open"}, {"d": 1, "e": "open"}]}, {"room": 1, "wires": [{"d": 6, "e": "toggle"}, {"d": 8, "e": "close"}, {"d": 9, "e": "toggle"}]}, {"room": 2, "wires": [{"d": 6, "e": "close"}, {"d": 8, "e": "open"}]}, {"room": 5, "wires": [{"d": 8, "e": "close"}, {"d": 7, "e": "toggle"}]}, {"room": 7, "wires": [{"d": 6, "e": "open"}, {"d": 4, "e": "close"}, {"d": 7, "e": "close"}]}, {"room": 6, "wires": [{"d": 11, "e": "close"}]}, {"room": 8, "wires": [{"d": 9, "e": "close"}, {"d": 0, "e": "close"}, {"d": 6, "e": "open"}]}, {"room": 5, "wires": [{"d": 7, "e": "close"}, {"d": 11, "e": "close"}, {"d": 8, "e": "close"}]}, {"room": 1, "wires": [{"d": 4, "e": "toggle"}, {"d": 8, "e": "toggle"}]}, {"room": 5, "wires": [{"d": 9, "e": "close"}]}], "start": 0, "goal": 8, "par": 9};
+const TRAPS = new Set([21570, 21574, 21698, 21568, 23554, 21506, 23622, 21571, 21702, 17602, 21572, 21696, 23558, 21510, 23682, 21634, 23552, 21504, 23618, 23750, 23620, 21575, 21699, 21569, 23555, 21507, 23623, 23875, 23751, 17606, 17600, 21700, 23686, 21638, 19586, 17538, 23556, 21508, 23680, 21632, 23746, 23616, 19654, 23748, 21703, 17603, 21573, 21697, 23559, 21511, 23683, 21635, 23553, 21505, 23619, 23621, 23879, 23747, 19655, 17604, 19590, 17542, 19584, 17536, 23684, 21636, 19650, 23744, 19652, 17607, 17601, 21701, 23687, 21639, 19587, 17539, 23557, 21509, 23681, 21633, 23617, 23749, 23811, 19651, 19653, 19588, 17540, 19648, 17605, 19591, 17543, 19585, 17537, 23685, 21637, 23745, 23815, 23873, 19649, 19589, 17541, 23877, 23809, 23813, 23878, 23876, 23814, 23812, 23874, 23810, 23872, 23808]);
+const NC = BOARD.nCols, NR = BOARD.nRows;
+const R = 104, G = 46;
+const COLORS = ['#ff5a5f','#3fa9f5','#ffce42','#4ad991','#b06bff','#ff9442','#22d3c5',
+                '#ff6fae','#7ad13a','#5b7bff','#ff7b39','#19c0a8','#e34bd9','#46e0c0','#9ad62f','#5ad1ff'];
+let rooms=[], doorEls={}, avatar=null;
+let room, doors, moves, done, dead, deaths=0;
+
+function label(r){ return String.fromCharCode(65+Math.floor(r/NC)) + (r%NC+1); }
+function roomXY(r){ return [ (r%NC)*(R+G), Math.floor(r/NC)*(R+G) ]; }
+function doorIdx(a,b){ for(let i=0;i<BOARD.doors.length;i++){const d=BOARD.doors[i];
+   if((d[0]==a&&d[1]==b)||(d[0]==b&&d[1]==a))return i;} return -1; }
+function maskInt(){ let m=0; for(let i=0;i<doors.length;i++) if(doors[i]) m+=(1<<i); return m; }
+function stateKey(){ return room*BOARD.keyMul + maskInt(); }
+function canWalk(to){ const di=doorIdx(room,to); return di>=0 && doors[di]; }
+
+function build(){
+  const stage=document.getElementById('stage');
+  stage.style.width=(NC*R+(NC-1)*G)+'px'; stage.style.height=(NR*R+(NR-1)*G)+'px';
+  for(let r=0;r<NR*NC;r++){ const [x,y]=roomXY(r); const el=document.createElement('div');
+     el.className='room'; el.style.left=x+'px'; el.style.top=y+'px'; el.style.width=R+'px'; el.style.height=R+'px';
+     const lab=document.createElement('div'); lab.className='rlabel'; lab.textContent=label(r); el.appendChild(lab);
+     if(r==BOARD.goal){ const g=document.createElement('div'); g.className='goal'; g.textContent='🏁'; el.appendChild(g); }
+     el.onclick=()=>walk(r); stage.appendChild(el); rooms[r]=el; }
+  BOARD.doors.forEach((pair,di)=>{ const [a,b]=pair; const [ax,ay]=roomXY(a);
+     const horizontal=(b-a)==1; const el=document.createElement('div');
+     el.className='door '+(horizontal?'hdoor':'vdoor');
+     if(horizontal){ el.style.left=(ax+R)+'px'; el.style.top=ay+'px'; el.style.width=G+'px'; el.style.height=R+'px'; }
+     else { el.style.left=ax+'px'; el.style.top=(ay+R)+'px'; el.style.width=R+'px'; el.style.height=G+'px'; }
+     el.innerHTML='<div class="panel p1"></div><div class="panel p2"></div>';
+     stage.appendChild(el); doorEls[di]=el; });
+  avatar=document.createElement('div'); avatar.className='avatar'; avatar.textContent='🧑‍🚀';
+  stage.appendChild(avatar);
+}
+
+function update(){
+  BOARD.doors.forEach((p,di)=> doorEls[di].classList.toggle('open', doors[di]) );
+  const [x,y]=roomXY(room); avatar.style.left=(x+R/2)+'px'; avatar.style.top=(y+R/2)+'px';
+  rooms.forEach((el,r)=>{ el.classList.toggle('reach', !done&&!dead&&canWalk(r)); });
+  document.body.classList.toggle('dead', !!dead);
+  const st=document.getElementById('status');
+  const tally = deaths ? '  ·  deaths '+deaths : '';
+  if(dead) st.innerHTML='<span class="die">☠ TRAPPED — you die.</span>'+tally;
+  else if(done) st.innerHTML='<span class="win">★ ESCAPED in '+moves+' moves (par '+BOARD.par+')</span>'+tally;
+  else st.textContent='moves '+moves+tally;
+  const pad=document.getElementById('pad'); pad.innerHTML=''; let any=false;
+  BOARD.buttons.forEach((b,bi)=>{ if(b.room!=room) return; any=true;
+     const el=document.createElement('button'); el.className='bigbtn';
+     el.style.background='radial-gradient(circle at 38% 30%, '+COLORS[bi%COLORS.length]+', '+shade(COLORS[bi%COLORS.length])+')';
+     el.disabled=done||dead; el.onclick=()=>press(bi); pad.appendChild(el); });
+  if(!any) pad.innerHTML='<span class="empty">no controls in this room — find another way</span>';
+}
+function shade(hex){ return hex; }
+
+function walk(to){ if(done||dead||!canWalk(to))return; room=to; moves++;
+   if(room==BOARD.goal){ done=true; update(); return; } if(checkDeath())return; update(); }
+function press(bi){ if(done||dead)return; for(const w of BOARD.buttons[bi].wires){
+     if(w.e=='open')doors[w.d]=true; else if(w.e=='close')doors[w.d]=false; else doors[w.d]=!doors[w.d]; }
+   moves++; if(checkDeath())return; update(); }
+function checkDeath(){ if(!done && !dead && TRAPS.has(stateKey())){ dead=true; update();
+   setTimeout(()=>{ deaths++; reset(); }, 1400); return true; } return false; }
+function reset(){ room=BOARD.start; doors=BOARD.initDoors.slice(); moves=0; done=false; dead=false; update(); }
+
+build(); reset();
+</script></body></html>
