@@ -1,0 +1,578 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Farm — warehouses, stores, runners, trucks, customers</title>
+<style>
+  html,body{margin:0;height:100%;background:#3a5a2a;font:13px/1.4 system-ui,Segoe UI,sans-serif;color:#eef5e0;}
+  #wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px;}
+  canvas{background:#7cc142;border:3px solid #2f4a22;border-radius:8px;box-shadow:0 8px 30px #0006;cursor:pointer;}
+  .bar{display:flex;gap:14px;align-items:center;background:#2f4a22;padding:8px 14px;border-radius:8px;flex-wrap:wrap;justify-content:center;}
+  b{color:#fff}
+  .t{font-size:15px;font-weight:600;color:#fff}
+  .pick{padding:3px 9px;border-radius:6px;background:#1f3416;color:#cfe0bb;cursor:pointer}
+  .pick.on{background:#ffd54f;color:#2f4a22;font-weight:700}
+  #main{display:flex;gap:10px;align-items:flex-start;justify-content:center;}
+  #side{width:190px;height:650px;background:#2f4a22;border-radius:8px;overflow:hidden;box-shadow:0 8px 30px #0006;}
+  #stage{position:relative;}
+  .tabs{display:flex;gap:3px;width:1200px;}
+  .tab{padding:5px 20px;cursor:pointer;background:#1f3416;color:#cfe0bb;font-weight:600;border-radius:6px 6px 0 0;}
+  .tab.on{background:#ffd54f;color:#2f4a22;}
+  #log{width:1200px;height:108px;overflow-y:auto;background:#2f4a22;border-radius:8px;padding:5px 10px;box-shadow:0 8px 30px #0006;}
+  .le{font:12px/1.4 ui-monospace,monospace;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .le.h{color:#8ef58e}.le.s{color:#ff8a8a}.le.i{color:#9fb08c}.le.w{color:#ffcc66}
+  #therm,#hist{background:#26401c;display:block;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="t">Stores start <b>basic</b> (route only — query warehouses live) → <b>+board</b> caches counts → <b>+shelf</b> holds goods. Watch the cost fall and staleness creep in.</div>
+  <div class="bar">
+    <span>Build: <span class="pick" id="p1">1 · Board</span> <span class="pick" id="p2">2 · Warehouse</span> <span class="pick" id="p3">3 · Store</span> <span class="pick" id="p4">4 · Supplier</span> <span class="pick" id="p5">5 · Order Center</span> <span class="pick" id="p6">6 · Customer</span></span>
+    <span>click grass to place · <b>supplier→warehouse</b> to stock it (any good) · <b>warehouse→warehouse</b> to forward-cache goods (moves stock toward demand) · <b>warehouse→order center</b> wires the read model · others link a runner</span>
+    <span>select a building: <b>✕</b> delete · <b>▲</b>/<b>u</b> upgrade store · <b>g</b> change what a supplier produces (warehouses hold anything)</span>
+    <span>Order Center bundle = <b>onion+carrot+tomato</b> = min(those three). Feed a warehouse all three (set suppliers with <b>g</b>) or it stays 0.</span>
+    <span><b>WASD</b> pan</span>
+    <span id="counts"></span>
+  </div>
+  <div class="tabs"><div class="tab on" id="tabLive">Live · board</div><div class="tab" id="tabHist">History</div></div>
+  <div id="main">
+    <div id="side"><canvas id="therm" width="190" height="170"></canvas></div>
+    <div id="stage">
+      <canvas id="c" width="1000" height="650"></canvas>
+      <canvas id="hist" width="1000" height="650" style="display:none"></canvas>
+    </div>
+  </div>
+  <div id="log"></div>
+  <div id="msg" style="height:18px;color:#ffe08a"></div>
+</div>
+<script>
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+const msgEl=document.getElementById('msg'), countsEl=document.getElementById('counts');
+const W=256, H=256, TILE=16;
+const GRASS=0, WATER=1, ROCK=2;
+const GOODS={onion:'#b39ddb', cabbage:'#9ccc65', corn:'#ffd54f', carrot:'#ff8a65', tomato:'#ef5350'};
+const GKEYS=Object.keys(GOODS);
+
+// ---------------- noise / terrain ----------------
+function hash(x,y,s){ let h=Math.imul(x|0,374761393)+Math.imul(y|0,668265263)+Math.imul(s|0,2246822519);
+  h=Math.imul(h^(h>>>13),1274126177); h^=h>>>16; return (h>>>0)/4294967296; }
+const sm=t=>t*t*(3-2*t);
+function vnoise(x,y,s){ const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0;
+  const a=hash(x0,y0,s),b=hash(x0+1,y0,s),c=hash(x0,y0+1,s),d=hash(x0+1,y0+1,s);
+  const u=sm(fx),v=sm(fy); return (a*(1-u)+b*u)*(1-v)+(c*(1-u)+d*u)*v; }
+function fbm(x,y,s){ let f=0,a=0.5,fr=1,sum=0; for(let o=0;o<4;o++){ f+=a*vnoise(x*fr,y*fr,s+o*97); sum+=a; fr*=2; a*=0.5; } return f/sum; }
+const terr=new Uint8Array(W*H);
+for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const e=fbm(x/42,y/42,1), r=fbm(x/15,y/15,2);
+  terr[y*W+x] = e<0.30 ? WATER : ((e>0.72||r>0.68) ? ROCK : GRASS); }
+const passable=(x,y)=> x>=0&&y>=0&&x<W&&y<H && terr[y*W+x]===GRASS;
+
+// ---------------- state ----------------
+const buildings=[];   // {type:'board'|'warehouse'|'store', cx,cy, id, hue, state, stock?}
+const runners=[];     // copy source.state -> dest.state, looping
+const trucks=[];      // one-shot: store -> warehouse (take 1) -> store (serve / shelf)
+const queries=[];     // basic store's live fan-out: store -> warehouse -> store, asking "do you have it?"
+const supplyTrucks=[];// producer side: supplier -> warehouse (deposit a batch) -> supplier
+const cacheTrucks=[]; // forward cache: cache warehouse -> origin warehouse (take 1) -> cache (deposit) — goods MOVE, the origin depletes
+const deliveries=[];  // CQRS command side: warehouse -> customer home, one bundle component each
+const SHELF_CAP=3;    // how deep a +shelf store stacks each good
+const WH_TARGET=12;   // a fed warehouse is "topped off" at this level
+const SUPPLY_BATCH=4; // goods per supplier truck
+const BUNDLE=['onion','carrot','tomato'];   // the fixed home-delivery bundle (one of each)
+const DELIVERY_SLA=60;// a bundle must arrive within this many seconds or the order breaches
+const customers=[];   // {home, px,py, phase, good, store, path, prog, timer, mood, moodT, carry, fetching, truckSent, order, bundle}
+let selected=null, buildType='board', whCount=0;
+let custSeq=0, orderSeq=0, simTime=0, happyTotal=0, sadTotal=0, hudTab='live';            // player-feedback HUD state
+const recentHappy=[], recentSad=[], history=[]; let bucket={happy:0,sad:0}, nextSample=0;
+const HUD_WINDOW=20, HUD_SAMPLE=3, HUD_HISTN=80;
+const cam={x:(W*TILE-cv.width)/2, y:(H*TILE-cv.height)/2};
+const keys={}; let msgUntil=0;
+function say(t){ msgEl.textContent=t; msgUntil=performance.now()+2600; }
+function snapshot(st){ const o={}; for(const k in st) o[k]={...st[k]}; return o; }
+function merge(dest, snap){ for(const k in snap) dest[k]={...snap[k]}; }
+function stateLines(st){ const out=[]; for(const k in st){ const f=st[k]; out.push((f.wh?f.wh+' ':'')+f.good+': '+f.n+(f.v!=null?' @'+f.v:'')); } return out; }
+
+function makeCustomer(x,y){ return {id:'#'+(++custSeq), home:{x,y}, px:x*TILE+TILE/2, py:y*TILE+TILE/2, phase:'idle', good:null, store:null, path:null, prog:0, timer:1+Math.random()*4, mood:null, moodT:0, carry:false, happiness:50, order:null}; }
+for(let i=0;i<5;i++){ let x,y,tries=0;                                   // cluster near the center (where the camera starts)
+  do{ const a=Math.random()*6.283, r=10+Math.random()*30; x=(W/2+Math.cos(a)*r)|0; y=(H/2+Math.sin(a)*r)|0; }while(!passable(x,y) && ++tries<200);
+  customers.push(makeCustomer(x,y)); }
+
+// ---------------- pathfinding ----------------
+function astar(sx,sy,tx,ty){
+  const N=W*H, g=new Float32Array(N).fill(Infinity), came=new Int32Array(N).fill(-1), closed=new Uint8Array(N);
+  const fh=[], ih=[];
+  function push(f,i){ fh.push(f); ih.push(i); let c=fh.length-1;
+    while(c>0){ const p=(c-1)>>1; if(fh[p]<=fh[c])break; [fh[p],fh[c]]=[fh[c],fh[p]];[ih[p],ih[c]]=[ih[c],ih[p]]; c=p; } }
+  function pop(){ const i0=ih[0], l=fh.length-1; fh[0]=fh[l];ih[0]=ih[l]; fh.pop();ih.pop();
+    let c=0,n=fh.length; while(true){ let a=2*c+1,b=2*c+2,m=c; if(a<n&&fh[a]<fh[m])m=a; if(b<n&&fh[b]<fh[m])m=b; if(m===c)break;
+      [fh[m],fh[c]]=[fh[c],fh[m]];[ih[m],ih[c]]=[ih[c],ih[m]]; c=m; } return i0; }
+  const h=(x,y)=>{ const dx=Math.abs(x-tx),dy=Math.abs(y-ty); return (dx+dy)+(1.4142-2)*Math.min(dx,dy); };
+  const start=sy*W+sx, goal=ty*W+tx; g[start]=0; push(h(sx,sy),start);
+  const DX=[1,-1,0,0,1,1,-1,-1], DY=[0,0,1,-1,1,-1,1,-1];
+  while(fh.length){ const u=pop(); if(closed[u])continue; closed[u]=1;
+    if(u===goal){ const p=[]; let k=u; while(k>=0){ p.push({x:k%W,y:(k/W)|0}); k=came[k]; } return p.reverse(); }
+    const ux=u%W, uy=(u/W)|0;
+    for(let d=0;d<8;d++){ const nx=ux+DX[d], ny=uy+DY[d]; if(!passable(nx,ny))continue;
+      if(d>=4 && (!passable(ux+DX[d],uy)||!passable(ux,uy+DY[d])))continue;
+      const v=ny*W+nx; if(closed[v])continue; const ng=g[u]+(d<4?1:1.4142);
+      if(ng<g[v]){ g[v]=ng; came[v]=u; push(ng+h(nx,ny),v); } } }
+  return null;
+}
+function losClear(a,b){ let x0=a.x,y0=a.y,x1=b.x,y1=b.y,dx=Math.abs(x1-x0),dy=Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1,err=dx-dy;
+  while(true){ if(!passable(x0,y0))return false; if(x0===x1&&y0===y1)break; const e2=2*err; if(e2>-dy){err-=dy;x0+=sx;} if(e2<dx){err+=dx;y0+=sy;} } return true; }
+function smooth(path){ if(path.length<3)return path; const out=[path[0]]; let i=0;
+  while(i<path.length-1){ let j=path.length-1; while(j>i+1 && !losClear(path[i],path[j]))j--; out.push(path[j]); i=j; } return out; }
+function makePath(a,b){ const raw=astar(a.cx,a.cy,b.cx,b.cy); if(!raw)return null;
+  const pts=smooth(raw).map(p=>({x:p.x*TILE+TILE/2, y:p.y*TILE+TILE/2}));
+  const cum=[0]; let total=0; for(let i=1;i<pts.length;i++){ total+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y); cum.push(total); }
+  return {pts,cum,total};
+}
+function reversePath(p){ const pts=p.pts.slice().reverse(), cum=[0]; let total=0;
+  for(let i=1;i<pts.length;i++){ total+=Math.hypot(pts[i].x-pts[i-1].x,pts[i].y-pts[i-1].y); cum.push(total); } return {pts,cum,total}; }
+function pathPos(p,d){ const c=p.cum; let i=1; while(i<c.length && c[i]<d)i++;
+  if(i>=c.length)return p.pts[p.pts.length-1]; const t=(d-c[i-1])/Math.max(1e-6,(c[i]-c[i-1]));
+  const A=p.pts[i-1],B=p.pts[i]; return {x:A.x+(B.x-A.x)*t, y:A.y+(B.y-A.y)*t}; }
+
+// ---------------- placement & linking ----------------
+function buildingAt(tx,ty){ for(const b of buildings){ if(Math.abs(tx-b.cx)<=1 && Math.abs(ty-b.cy)<=1) return b; } return null; }
+function footprintFree(cx,cy){ if(cx<1||cy<1||cx>W-2||cy>H-2)return false;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ if(!passable(cx+dx,cy+dy))return false; if(buildingAt(cx+dx,cy+dy))return false; } return true; }
+function placeBuilding(cx,cy){ const b={type:buildType, cx, cy, hue:Math.random()*24-12, state:{}, ver:0};
+  if(buildType==='warehouse'){ b.id='W'+(++whCount); b.cacheFeeds=[];                       // a generic multi-good store; starts with a couple of random goods, suppliers add the rest; becomes a forward cache once fed by other warehouses
+    for(const g of GKEYS.slice().sort(()=>Math.random()-0.5).slice(0,2)) b.state[wkey(b.id,g)]={wh:b.id, good:g, n:3+(Math.random()*8|0), v:1}; }
+  if(buildType==='store'){ b.tier=0; b.routing={}; b.stock={}; }   // tier 0 basic (routing only) · 1 +board (cached counts) · 2 +shelf (goods)
+  if(buildType==='supplier'){ b.good=GKEYS[Math.random()*GKEYS.length|0]; b.links=[]; }   // typed producer: makes one good, writes it into any warehouse
+  // 'ordercenter' just needs its board (b.state) — feed it warehouses with runners; it answers bundle queries + ships home delivery
+  buildings.push(b); return b; }
+const RUN_COLORS=['#fff176','#4fc3f7','#ff8a65','#ce93d8','#aed581','#f06292','#4db6ac'];
+function whById(id){ return buildings.find(b=>b.type==='warehouse'&&b.id===id); }
+function wkey(whId,good){ return whId+'|'+good; }                            // a warehouse holds many goods, each a separate fact keyed (warehouse|good)
+function whFact(wh,good){ return wh.state[wkey(wh.id,good)]; }
+function whGoods(wh){ const out=[]; for(const k in wh.state){ const f=wh.state[k]; if(f.n>0) out.push(f.good); } return out; }
+function routedFor(st,good){ const out=[]; for(const id in st.routing){ if((st.routing[id]||[]).includes(good)){ const w=whById(id); if(w)out.push(w); } } return out; }
+function spawnReplRunner(a,b){ const p=makePath(a,b); if(!p){ say("No path — water or rock blocks every route."); return false; }
+  runners.push({...p, a,b, speed:70+Math.random()*25, color:RUN_COLORS[runners.length%RUN_COLORS.length],
+    phase:'toDest', prog:0, carry:snapshot(a.state), lastVer:(a.ver||0)});                 // delivers once, then idles until source changes
+  return true; }
+function link(a,b){                                                          // click source then target
+  if(a.type==='supplier') return linkSupplier(a,b);
+  if(a.type==='warehouse' && b.type==='warehouse') return linkCacheFeed(a,b);   // origin -> cache: b forward-caches goods pulled from a
+  if(b.type==='store') return linkToStore(a,b);
+  if(spawnReplRunner(a,b)) say("Replication runner "+(a.id||a.type)+" → "+(b.id||b.type)+" — dispatches only when the source changes."); }
+function linkCacheFeed(src,cache){                                           // cache pulls goods from the origin — MOVES stock (depletes the origin), unlike an info cache that copies
+  if(src===cache){ say("A warehouse can't cache from itself."); return; }
+  cache.cacheFeeds=cache.cacheFeeds||[];
+  if(cache.cacheFeeds.some(f=>f.src===src)){ say(cache.id+" already forward-caches from "+src.id+"."); return; }
+  const p=makePath(cache,src); if(!p){ say("No path — water or rock blocks every route."); return; }
+  cache.cacheFeeds.push({src,path:p}); say(cache.id+" now forward-caches goods pulled from "+src.id+" — this MOVES stock, so "+src.id+" depletes."); }
+function linkSupplier(sup,wh){                                               // a typed producer feeds ANY warehouse — the warehouse holds whatever it's given
+  if(wh.type!=='warehouse'){ say("A supplier can only feed a warehouse."); return; }
+  if(sup.links.some(l=>l.wh===wh)){ say("Already feeding "+wh.id+"."); return; }
+  const p=makePath(sup,wh); if(!p){ say("No path — water or rock blocks every route."); return; }
+  sup.links.push({wh,path:p}); say(sup.good+" supplier now stocks "+wh.id+" with "+sup.good+" (up to "+WH_TARGET+")."); }
+function linkToStore(src,st){                                                 // register a backend with a store (routing), and cache it if the store has a board
+  if(src.type==='warehouse'){ st.routing[src.id]=whGoods(src); }
+  else if(src.type==='board'){ for(const k in src.state){ const f=src.state[k]; if(!f.wh)continue; (st.routing[f.wh]=st.routing[f.wh]||[]); if(!st.routing[f.wh].includes(f.good)) st.routing[f.wh].push(f.good); } }   // learn membership from a board
+  else { say("Register a warehouse or a board with a store (click it, then the store)."); return; }
+  if(st.tier>=1){ spawnReplRunner(src,st);
+    say("Registered "+(src.id||'board')+" — wired a replication runner so the board caches its counts."); }
+  else say("Registered "+(src.id||'board')+" — a basic store remembers WHO sells what (routing), not how many."); }
+function upgradeStore(st){
+  if(st.type!=='store'){ say("Only stores upgrade."); return; }
+  if(st.tier>=2){ say("Store already has a board and a shelf."); return; }
+  st.tier++;
+  if(st.tier===1){ let n=0; for(const id in st.routing){ const w=whById(id); if(w && spawnReplRunner(w,st))n++; }
+    say("+Board: store caches counts from "+n+" warehouse(s). Reads answer from the cache — fast, but it can go stale."); }
+  else say("+Shelf: store prefetches goods and serves customers instantly off the shelf (edge inventory)."); }
+function deleteBuilding(b){
+  const i=buildings.indexOf(b); if(i<0)return; buildings.splice(i,1);
+  for(let k=runners.length-1;k>=0;k--) if(runners[k].a===b||runners[k].b===b) runners.splice(k,1);
+  for(let k=trucks.length-1;k>=0;k--)  if(trucks[k].store===b||trucks[k].wh===b) trucks.splice(k,1);
+  for(let k=queries.length-1;k>=0;k--) if(queries[k].st===b||queries[k].wh===b) queries.splice(k,1);
+  for(let k=supplyTrucks.length-1;k>=0;k--) if(supplyTrucks[k].sup===b||supplyTrucks[k].wh===b) supplyTrucks.splice(k,1);
+  for(let k=deliveries.length-1;k>=0;k--) if(deliveries[k].wh===b) deliveries.splice(k,1);
+  for(let k=cacheTrucks.length-1;k>=0;k--) if(cacheTrucks[k].cache===b||cacheTrucks[k].src===b) cacheTrucks.splice(k,1);
+  for(const o of buildings){ if(o.links) o.links=o.links.filter(l=>l.wh!==b); if(o.cacheFeeds) o.cacheFeeds=o.cacheFeeds.filter(f=>f.src!==b); }   // drop feeds into/from a deleted warehouse
+  for(const c of customers) if(c.store===b){ c.store=null; c.phase='idle'; c.timer=2+Math.random()*3; c.fetching=false; c.truckSent=false; }
+  if(b.id) for(const o of buildings){ if(o.routing) delete o.routing[b.id]; if(o.state) for(const k in o.state) if(o.state[k].wh===b.id) delete o.state[k]; }
+  if(selected===b) selected=null;
+  say("Deleted "+(b.id||b.type)+"."); }
+function inRect(x,y,r){ return x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h; }
+function selButtons(b){ const px=(b.cx-1)*TILE-cam.x, py=(b.cy-1)*TILE-cam.y, s=TILE*3;
+  const o={ del:{x:px+s+4,y:py,w:22,h:18} };
+  if(b.type==='store'&&b.tier<2) o.up={x:px+s+4,y:py+22,w:22,h:18};
+  return o; }
+cv.addEventListener('mousedown',e=>{
+  const r=cv.getBoundingClientRect(), mx=(e.clientX-r.left)*(cv.width/r.width), my=(e.clientY-r.top)*(cv.height/r.height);
+  if(selected){ const sb=selButtons(selected);                              // delete / upgrade buttons on the selected building
+    if(sb.del && inRect(mx,my,sb.del)){ deleteBuilding(selected); return; }
+    if(sb.up  && inRect(mx,my,sb.up)){ upgradeStore(selected); return; } }
+  const tx=Math.floor((mx+cam.x)/TILE), ty=Math.floor((my+cam.y)/TILE), b=buildingAt(tx,ty);
+  if(b){ if(selected && b!==selected){ link(selected,b); selected=null; } else { selected=b; say("Selected "+(b.id||b.type)+" — click a store to register this, or another building to link a runner."); } }
+  else if(buildType==='customer'){ if(passable(tx,ty)){ customers.push(makeCustomer(tx,ty)); selected=null; } else say("Customers need open grass."); }
+  else if(passable(tx,ty) && footprintFree(tx,ty)){ placeBuilding(tx,ty); selected=null; }
+  else say("Can't build there — needs open grass with room for 3×3.");
+});
+addEventListener('keydown',e=>{ const k=e.key.toLowerCase(); keys[k]=true;
+  if(k==='1'){buildType='board';bar();} if(k==='2'){buildType='warehouse';bar();} if(k==='3'){buildType='store';bar();} if(k==='4'){buildType='supplier';bar();} if(k==='5'){buildType='ordercenter';bar();} if(k==='6'){buildType='customer';bar();}
+  if((k==='delete'||k==='backspace')&&selected){ deleteBuilding(selected); }
+  if(k==='u'&&selected&&selected.type==='store'){ upgradeStore(selected); }
+  if(k==='g'&&selected){ cycleGood(selected); } });
+function cycleGood(b){                                                       // a supplier is the typed thing; a warehouse holds whatever it's fed
+  if(b.type==='supplier'){ b.good=GKEYS[(GKEYS.indexOf(b.good)+1)%GKEYS.length]; say('Supplier now produces '+b.good+'.'); }
+  else say('Press g on a supplier to change what it produces (warehouses hold anything).'); }
+addEventListener('keyup',e=>{ keys[e.key.toLowerCase()]=false; });
+const BUILD_TYPES=['board','warehouse','store','supplier','ordercenter','customer'];
+function bar(){ BUILD_TYPES.forEach((t,i)=>document.getElementById('p'+(i+1)).className='pick'+(buildType===t?' on':'')); }
+BUILD_TYPES.forEach((t,i)=>document.getElementById('p'+(i+1)).onclick=()=>{buildType=t;bar();}); bar();
+for(let i=0;i<5;i++){ let x,y,tries=0;                                        // scatter a few suppliers wide across the map (unwired until you feed them to a warehouse)
+  do{ x=8+(Math.random()*(W-16)|0); y=8+(Math.random()*(H-16)|0); }while(!footprintFree(x,y) && ++tries<300);
+  if(tries<300){ buildType='supplier'; placeBuilding(x,y); } }
+buildType='board'; bar();
+// ---------------- player feedback (log + thermometers + history) ----------------
+const thermCv=document.getElementById('therm'), thermCtx=thermCv.getContext('2d');
+const histCv=document.getElementById('hist'), histCtx=histCv.getContext('2d');
+const logEl=document.getElementById('log');
+function setHudTab(t){ hudTab=t;
+  document.getElementById('tabLive').className='tab'+(t==='live'?' on':'');
+  document.getElementById('tabHist').className='tab'+(t==='hist'?' on':'');
+  document.getElementById('c').style.display=t==='live'?'block':'none';      // the game board and the history chart alternate in the same stage
+  document.getElementById('hist').style.display=t==='hist'?'block':'none'; }
+document.getElementById('tabLive').onclick=()=>setHudTab('live');
+document.getElementById('tabHist').onclick=()=>setHudTab('hist');
+function logEvent(text,cls,metric){                                           // cls: h green · s red · w amber · i gray ; metric: 'happy'|'sad'|null (drives thermometers + history)
+  if(metric==='happy'){ happyTotal++; recentHappy.push(simTime); bucket.happy++; }
+  else if(metric==='sad'){ sadTotal++; recentSad.push(simTime); bucket.sad++; }
+  const sym={h:'✓ ',s:'✕ ',w:'! ',i:'· '}[cls]||'· ';
+  const d=document.createElement('div'); d.className='le '+cls; d.textContent=sym+text;
+  logEl.insertBefore(d, logEl.firstChild); while(logEl.childNodes.length>80) logEl.removeChild(logEl.lastChild); }
+
+// ---------------- customers & trucks ----------------
+function nearestStore(tx,ty){ let best=null,bd=Infinity; for(const b of buildings){ if(b.type!=='store')continue;
+  const d=Math.hypot(b.cx-tx,b.cy-ty); if(d<=64 && d<bd){ bd=d; best=b; } } return best; }
+function nearestOrderCenter(tx,ty){ let best=null,bd=Infinity; for(const b of buildings){ if(b.type!=='ordercenter')continue;   // a "call" — no range limit; distance is paid by the delivery, not the query
+  const d=Math.hypot(b.cx-tx,b.cy-ty); if(d<bd){ bd=d; best=b; } } return best; }
+function componentTotals(state){ const tot={}; for(const k in state){ const f=state[k]; if(f.n>0) tot[f.good]=(tot[f.good]||0)+f.n; } return tot; }   // sum per good across the read model
+function bundleSupply(state){ const tot=componentTotals(state); let m=Infinity; for(const g of BUNDLE) m=Math.min(m,tot[g]||0); return m===Infinity?0:m; }   // the synthesized fact: how many whole bundles the read model thinks we can ship
+function nearestWhFor(state,good,hx,hy){ let best=null,bd=Infinity; for(const id in state){ const f=state[id]; if(f.good===good && f.n>0){ const w=whById(f.wh); if(w){ const d=Math.hypot(w.cx-hx,w.cy-hy); if(d<bd){ bd=d; best=w; } } } } return best; }   // the read model's CLOSEST warehouse to the customer holding this component
+function dispatchTruck(store,wh,good,opts){ opts=opts||{}; const p=makePath(store,wh); if(!p)return false;
+  trucks.push({good,store,wh,phase:'toWh',path:p,prog:0,amount:0,speed:52,forCust:opts.forCust||null,shelf:!!opts.shelf,
+    px:store.cx*TILE+TILE/2,py:store.cy*TILE+TILE/2}); return true; }
+function happy(c,d){ c.happiness=Math.max(0,Math.min(100,c.happiness+d)); }
+function serve(c){ c.mood='happy'; c.moodT=2.8; c.carry=true; c.phase='toHome'; happy(c,1); logEvent(c.id+' got '+c.good, 'h', 'happy'); }
+function startFetch(c){ const st=c.store, g=c.good; c.fetching=true;                         // one fetch attempt per request
+  if(st.tier===0){                                                                          // basic: fan out live queries to the routed warehouses
+    const whs=routedFor(st,g); if(!whs.length) return;
+    for(const w of whs){ const p=makePath(st,w); if(p) queries.push({st,wh:w,good:g,forCust:c,path:p,prog:0,phase:'out',hasIt:false,speed:120,px:st.cx*TILE+TILE/2,py:st.cy*TILE+TILE/2}); } }
+  else {                                                                                    // +board / +shelf miss: read the cached board, roll a truck to the best-looking warehouse
+    let best=null,bn=0; for(const id in st.state){ const f=st.state[id]; if(f.good===g && f.n>bn){ const w=whById(f.wh); if(w){ bn=f.n; best=w; } } }
+    if(best){ dispatchTruck(st,best,g,{forCust:c}); c.truckSent=true; } }
+}
+function transact(c){ const st=c.store, g=c.good;
+  if(st.tier>=2 && (st.stock[g]||0)>=1){ st.stock[g]--; serve(c); return; }                  // +shelf: sell straight off the shelf
+  c.phase='waiting'; c.wait=15; c.fetching=false; c.truckSent=false; startFetch(c);          // otherwise the customer waits while we fetch
+}
+function prefetchShelf(st){ if(st.tier<2) return;                                            // keep the shelf topped from the board
+  const avail=new Set(); for(const id in st.state){ const f=st.state[id]; if(f.n>0) avail.add(f.good); }
+  for(const g of avail){ if((st.stock[g]||0)>=SHELF_CAP || trucks.some(t=>t.store===st&&t.good===g&&t.shelf)) continue;
+    let best=null,bn=0; for(const id in st.state){ const f=st.state[id]; if(f.good===g && f.n>bn){ const w=whById(f.wh); if(w){ bn=f.n; best=w; } } }
+    if(best) dispatchTruck(st,best,g,{shelf:true}); }
+}
+function updateCustomers(dt){ for(const c of customers){
+  if(c.moodT>0){ c.moodT-=dt; if(c.moodT<=0)c.mood=null; }
+  if(c.phase==='idle'){ c.timer-=dt; if(c.timer<=0){
+      const oc=nearestOrderCenter(c.home.x,c.home.y);
+      if(oc && Math.random()<0.4){ callOrderCenter(c,oc); }                                  // call the order center for a home-delivered bundle
+      else { c.good=GKEYS[Math.random()*GKEYS.length|0];                                      // otherwise walk to a store for a single good
+        const st=nearestStore(c.home.x,c.home.y);
+        if(!st){ c.timer=3+Math.random()*4; c.mood='nostore'; c.moodT=1.6; }                       // not an outcome worth logging — just no store nearby yet
+        else { const p=makePath({cx:c.home.x,cy:c.home.y},st); if(!p){ c.timer=3+Math.random()*3; } else { c.store=st; c.path=p; c.prog=0; c.phase='toStore'; } } } } }
+  else if(c.phase==='awaiting'){ const o=c.order; o.deadline-=dt;                              // bundle ordered home — race the SLA
+      if(o.delivered.length>=BUNDLE.length){ c.mood='happy'; c.moodT=2.8; happy(c,2); c.phase='idle'; c.timer=5+Math.random()*5; logEvent('order ('+o.id+') fulfilled', 'h', 'happy'); c.order=null; c.bundle=false; }
+      else if(o.deadline<=0){ for(let i=deliveries.length-1;i>=0;i--) if(deliveries[i].order===o) deliveries.splice(i,1);   // breach: cancel in-transit, goods wasted
+        c.mood='sad'; c.moodT=2.8; happy(c,-1); c.phase='idle'; c.timer=5+Math.random()*5;
+        const got=o.delivered.length;
+        if(got>0) logEvent('order ('+o.id+') short ('+got+'/'+BUNDLE.length+')', 'w', 'sad');   // partial — some components arrived
+        else logEvent('order ('+o.id+') failed', 's', 'sad');                                    // nothing arrived in time
+        c.order=null; c.bundle=false; } }
+  else if(c.phase==='toStore'){ c.prog+=112*dt; const p=pathPos(c.path,c.prog); c.px=p.x; c.py=p.y;
+      if(c.prog>=c.path.total){ c.prog=c.path.total; transact(c); } }                       // transact picks the next phase
+  else if(c.phase==='waiting'){ c.wait-=dt; const g=c.good, st=c.store;
+      if(st.tier>=2 && (st.stock[g]||0)>=1){ st.stock[g]--; serve(c); }                       // shelf refilled while waiting
+      else if(c.wait<=0){ c.mood='sad'; c.moodT=2.8; c.phase='toHome'; happy(c,-1); logEvent(c.id+' left without '+c.good, 's', 'sad'); } }   // truck delivery serves via updateTrucks
+  else if(c.phase==='toHome'){ c.prog-=112*dt; const p=pathPos(c.path,c.prog); c.px=p.x; c.py=p.y;
+      if(c.prog<=0){ c.prog=0; c.phase='idle'; c.timer=4+Math.random()*6; c.carry=false; } }
+} }
+function updateTrucks(dt){ for(let i=trucks.length-1;i>=0;i--){ const t=trucks[i]; t.prog+=t.speed*dt; const p=pathPos(t.path,t.prog); t.px=p.x; t.py=p.y;
+  if(t.prog>=t.path.total){
+    if(t.phase==='toWh'){ const f=whFact(t.wh,t.good); if(f && f.n>0){ f.n--; f.v++; t.wh.ver++; t.amount=1; } else t.amount=0;   // stale -> empty
+      t.phase='toStore'; t.path=reversePath(t.path); t.prog=0; }
+    else {                                                                                   // arrived back at the store
+      if(t.shelf){ if(t.amount>0) t.store.stock[t.good]=Math.min(SHELF_CAP,(t.store.stock[t.good]||0)+t.amount); }   // +shelf: stack it
+      else if(t.amount>0){ const c=t.forCust;                                                // reactive: hand it to the waiting customer
+        if(c && c.store===t.store && c.good===t.good && c.phase==='waiting') serve(c);        // else the good perished at the dock — a basic/board store holds nothing
+      }
+      trucks.splice(i,1); }
+  } } }
+function updateQueries(dt){ for(let i=queries.length-1;i>=0;i--){ const q=queries[i];
+  if(q.phase==='out'){ q.prog+=q.speed*dt; const p=pathPos(q.path,q.prog); q.px=p.x; q.py=p.y;
+    if(q.prog>=q.path.total){ const f=whFact(q.wh,q.good); q.hasIt=!!(f && f.n>0); q.phase='back'; } }   // read the live count
+  else { q.prog-=q.speed*dt; const p=pathPos(q.path,q.prog); q.px=p.x; q.py=p.y;
+    if(q.prog<=0){ const c=q.forCust;                                                         // first "yes" back rolls the truck
+      if(q.hasIt && c && c.phase==='waiting' && c.good===q.good && c.store===q.st && !c.truckSent){ if(dispatchTruck(q.st,q.wh,q.good,{forCust:c})) c.truckSent=true; }
+      queries.splice(i,1); } }
+} }
+function updateSuppliers(dt){ for(const b of buildings){ if(b.type!=='supplier')continue;
+  for(const l of b.links){ const f=whFact(l.wh,b.good);                                        // top off THIS supplier's good in the warehouse, one truck in flight at a time
+    if((!f || f.n<WH_TARGET) && !supplyTrucks.some(t=>t.sup===b && t.wh===l.wh)){
+      supplyTrucks.push({sup:b, wh:l.wh, good:b.good, path:l.path, prog:0, phase:'toWh', amount:SUPPLY_BATCH, speed:48, px:b.cx*TILE+TILE/2, py:b.cy*TILE+TILE/2}); } }
+} }
+function updateSupplyTrucks(dt){ for(let i=supplyTrucks.length-1;i>=0;i--){ const t=supplyTrucks[i]; t.prog+=t.speed*dt; const p=pathPos(t.path,t.prog); t.px=p.x; t.py=p.y;
+  if(t.phase==='toWh'){ if(t.prog>=t.path.total){ const key=wkey(t.wh.id,t.good);                // deposit: a producer write — create the good if the warehouse didn't hold it, bump version so replicas notice
+      const f=t.wh.state[key]||(t.wh.state[key]={wh:t.wh.id,good:t.good,n:0,v:0}); f.n+=t.amount; f.v++; t.wh.ver++;
+      t.phase='back'; t.path=reversePath(t.path); t.prog=0; } }
+  else { if(t.prog>=t.path.total) supplyTrucks.splice(i,1); }                                   // empty truck home, then gone
+} }
+function updateCacheFeeds(dt){ for(const cache of buildings){ if(cache.type!=='warehouse' || !cache.cacheFeeds || !cache.cacheFeeds.length) continue;
+  for(const fd of cache.cacheFeeds){ for(const g of whGoods(fd.src)){                          // mirror whatever the origin holds, capped, one truck per (cache,good)
+    const have=whFact(cache,g);
+    if((!have || have.n<WH_TARGET) && !cacheTrucks.some(t=>t.cache===cache && t.good===g)){
+      cacheTrucks.push({cache, src:fd.src, good:g, path:fd.path, prog:0, phase:'toSrc', amount:0, speed:50, px:cache.cx*TILE+TILE/2, py:cache.cy*TILE+TILE/2}); } } }
+} }
+function updateCacheTrucks(dt){ for(let i=cacheTrucks.length-1;i>=0;i--){ const t=cacheTrucks[i]; t.prog+=t.speed*dt; const p=pathPos(t.path,t.prog); t.px=p.x; t.py=p.y;
+  if(t.phase==='toSrc'){ if(t.prog>=t.path.total){ const f=whFact(t.src,t.good); if(f && f.n>0){ f.n--; f.v++; t.src.ver++; t.amount=1; } else t.amount=0;   // pull a unit from the origin (it depletes)
+      t.phase='back'; t.path=reversePath(t.path); t.prog=0; } }
+  else { if(t.prog>=t.path.total){ if(t.amount>0){ const key=wkey(t.cache.id,t.good); const f2=t.cache.state[key]||(t.cache.state[key]={wh:t.cache.id,good:t.good,n:0,v:0}); f2.n+=t.amount; f2.v++; t.cache.ver++; }   // deposit into the cache
+      cacheTrucks.splice(i,1); } }
+} }
+function callOrderCenter(c,oc){                                                                 // CQRS: query the read model, accept optimistically, command the warehouses
+  if(bundleSupply(oc.state)<1){ c.mood='nostore'; c.moodT=1.6; c.timer=4+Math.random()*4; logEvent(c.id+' no bundle available', 'i', null); return; }   // read model says no whole bundle available
+  const order={ id:++orderSeq, need:BUNDLE.slice(), delivered:[], deadline:DELIVERY_SLA };
+  logEvent('order ('+order.id+') placed', 'i', null);
+  for(const g of BUNDLE){ const w=nearestWhFor(oc.state,g,c.home.x,c.home.y);                          // dispatch from the read model's CLOSEST warehouse to the customer (a nearby forward cache beats the far origin)
+    if(w){ const f=whFact(w,g); if(f && f.n>0){ const p=makePath(w,{cx:c.home.x,cy:c.home.y});   // command executes on the real write model
+      if(p){ f.n--; f.v++; w.ver++; deliveries.push({order,good:g,wh:w,path:p,prog:0,speed:60,px:w.cx*TILE+TILE/2,py:w.cy*TILE+TILE/2}); } } } }
+  c.order=order; c.bundle=true; c.phase='awaiting';                                              // any component the stale read missed just never ships -> breach at the SLA
+}
+function updateDeliveries(dt){ for(let i=deliveries.length-1;i>=0;i--){ const d=deliveries[i]; d.prog+=d.speed*dt; const p=pathPos(d.path,d.prog); d.px=p.x; d.py=p.y;
+  if(d.prog>=d.path.total){ if(d.order && !d.order.delivered.includes(d.good)) d.order.delivered.push(d.good); deliveries.splice(i,1); } } }
+
+// ---------------- render ----------------
+function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawBtn(rc,sym){ ctx.fillStyle='rgba(20,30,15,.85)'; roundRect(rc.x,rc.y,rc.w,rc.h,4); ctx.fill();
+  ctx.strokeStyle='#6a8a4a'; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle='#eaf5d8'; ctx.font='bold 15px system-ui';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(sym,rc.x+rc.w/2,rc.y+rc.h/2+1); ctx.textBaseline='alphabetic'; }
+function tileColor(t,x,y){ const j=(hash(x,y,9)-0.5)*16;
+  if(t===GRASS)return 'rgb('+(124+j|0)+','+(193+j|0)+','+(66+j|0)+')';
+  if(t===WATER)return 'rgb('+(79+j|0)+','+(195+j|0)+','+(247+j|0)+')';
+  return 'rgb('+(140+j|0)+','+(132+j|0)+','+(120+j|0)+')'; }
+function floatLabel(px,py,lines){ if(!lines.length)lines=['—']; ctx.font='10px system-ui';
+  const w=Math.max(...lines.map(l=>ctx.measureText(l).width))+10, h=lines.length*12+6, lx=px-w/2, ly=py-h-4;
+  ctx.fillStyle='rgba(20,30,15,.82)'; roundRect(lx,ly,w,h,5); ctx.fill();
+  ctx.fillStyle='#eaf5d8'; ctx.textAlign='center'; lines.forEach((l,i)=>ctx.fillText(l,px,ly+13+i*12)); }
+function drawWarehouse(px,py,s,b){ ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(px+s/2,py+s-4,s*0.44,7,0,0,7); ctx.fill();
+  ctx.fillStyle='rgb('+(200+b.hue|0)+','+(190+b.hue|0)+','+(168+b.hue|0)+')'; ctx.fillRect(px+3,py+s*0.40,s-6,s*0.60-4);
+  ctx.fillStyle='#5d4037'; ctx.beginPath(); ctx.moveTo(px,py+s*0.44); ctx.lineTo(px+s*0.5,py+3); ctx.lineTo(px+s,py+s*0.44); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#37291c'; ctx.fillRect(px+s/2-9,py+s-20,18,16); ctx.fillStyle='#cfe0bb'; ctx.fillRect(px+6,py+s*0.5,8,6); ctx.fillRect(px+s-14,py+s*0.5,8,6);
+  if(b.cacheFeeds && b.cacheFeeds.length){ ctx.fillStyle='#26a69a'; roundRect(px+3,py+2,32,11,3); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 8px system-ui'; ctx.textAlign='left'; ctx.fillText('CACHE',px+6,py+10); } }
+function drawBoard(px,py,s,b){ ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(px+s/2,py+s-3,s*0.34,5,0,0,7); ctx.fill();
+  ctx.fillStyle='#6d4c33'; ctx.fillRect(px+10,py+s*0.55,4,s*0.45); ctx.fillRect(px+s-14,py+s*0.55,4,s*0.45);
+  ctx.fillStyle='#d8b98a'; roundRect(px+3,py+4,s-6,s*0.58,4); ctx.fill(); ctx.strokeStyle='#6d4c33'; ctx.lineWidth=2; ctx.stroke();
+  const lines=stateLines(b.state); ctx.font='8px ui-monospace,monospace'; ctx.textAlign='left';
+  if(!lines.length){ ctx.fillStyle='#9a8160'; ctx.fillText('—',px+8,py+s*0.34); }
+  else { ctx.fillStyle='#3a2a18'; lines.slice(0,3).forEach((ln,i)=>ctx.fillText(ln.length>11?ln.slice(0,11):ln,px+6,py+12+i*9)); if(lines.length>3)ctx.fillText('…',px+6,py+39); } }
+function drawStore(px,py,s,b){ ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(px+s/2,py+s-4,s*0.44,7,0,0,7); ctx.fill();
+  ctx.fillStyle='#fafafa'; ctx.fillRect(px+3,py+s*0.34,s-6,s*0.66-4);                              // body
+  for(let i=0;i<6;i++){ ctx.fillStyle=i%2?'#ef5350':'#fafafa'; ctx.fillRect(px+3+i*(s-6)/6,py+s*0.28,(s-6)/6,s*0.10); }  // awning
+  ctx.fillStyle='#5c4030'; ctx.fillRect(px+s/2-7,py+s-18,14,14);                                    // door
+  ctx.fillStyle='#bbdefb'; ctx.fillRect(px+6,py+s*0.46,9,9); ctx.fillStyle='#1f3416'; ctx.font='bold 8px system-ui'; ctx.textAlign='center'; ctx.fillText('SHOP',px+s/2+4,py+s*0.55);
+  // tier badge, top-left of the storefront
+  const badge=['basic','+board','+shelf'][b.tier]||'basic';
+  ctx.fillStyle=b.tier===0?'#9e9e9e':(b.tier===1?'#42a5f5':'#66bb6a'); roundRect(px+3,py+2,32,11,3); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.font='bold 8px system-ui'; ctx.textAlign='left'; ctx.fillText(badge,px+6,py+10);
+  // bottom row: the shelf (tier 2) or the routing table (tier 0/1)
+  let gx=px+6, gy=py+s+6; ctx.font='9px system-ui'; ctx.textAlign='left';
+  if(b.tier>=2){ const gs=Object.keys(b.stock).filter(k=>b.stock[k]>0);
+    if(!gs.length){ ctx.fillStyle='#cdb'; ctx.fillText('(shelf empty)',gx,gy+4); }
+    else gs.forEach(k=>{ ctx.fillStyle=GOODS[k]; ctx.beginPath(); ctx.arc(gx+4,gy,4,0,7); ctx.fill(); ctx.fillStyle='#eaf5d8'; ctx.fillText(b.stock[k]+'',gx+10,gy+3); gx+=26; }); }
+  else { const ids=Object.keys(b.routing); ctx.fillStyle='#dfeccb';
+    ctx.fillText(ids.length?('routes: '+ids.join(',')):'(no warehouses registered)',gx,gy+4); } }
+function drawSupplier(px,py,s,b){ ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(px+s/2,py+s-4,s*0.44,7,0,0,7); ctx.fill();
+  // a tilled field, furrows tinted by the good it grows
+  ctx.fillStyle='#6b4a2b'; ctx.fillRect(px+3,py+s*0.42,s-6,s*0.58-4);
+  for(let i=0;i<4;i++){ ctx.fillStyle=GOODS[b.good]; ctx.fillRect(px+5,py+s*0.46+i*((s*0.54-4)/4),s-10,3); }
+  // a silo on the left
+  ctx.fillStyle='#cfd8dc'; roundRect(px+2,py+s*0.14,s*0.26,s*0.52,3); ctx.fill();
+  ctx.fillStyle='#90a4ae'; ctx.beginPath(); ctx.moveTo(px+2,py+s*0.16); ctx.lineTo(px+2+s*0.13,py+s*0.04); ctx.lineTo(px+2+s*0.26,py+s*0.16); ctx.closePath(); ctx.fill();
+  // good badge
+  ctx.fillStyle='rgba(20,30,15,.8)'; roundRect(px+s*0.34,py+2,s*0.62,12,3); ctx.fill();
+  ctx.fillStyle=GOODS[b.good]; ctx.beginPath(); ctx.arc(px+s*0.40,py+8,3.5,0,7); ctx.fill();
+  ctx.fillStyle='#eaf5d8'; ctx.font='8px system-ui'; ctx.textAlign='left'; ctx.fillText(b.good,px+s*0.46,py+11); }
+function drawOrderCenter(px,py,s,b){ ctx.fillStyle='rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(px+s/2,py+s-4,s*0.44,7,0,0,7); ctx.fill();
+  ctx.fillStyle='#37474f'; ctx.fillRect(px+3,py+s*0.30,s-6,s*0.70-4);                              // dark kiosk
+  ctx.fillStyle='#263238'; ctx.fillRect(px+3,py+s*0.30,s-6,s*0.14);
+  ctx.fillStyle='#ffca28'; ctx.font='bold 8px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('ORDERS',px+s/2,py+s*0.37); ctx.textBaseline='alphabetic';
+  // the read model: per-component totals (the inputs) and the synthesized bundle count (the projection)
+  const tot=componentTotals(b.state), bundles=bundleSupply(b.state);
+  ctx.font='8px ui-monospace,monospace'; ctx.textAlign='left';
+  BUNDLE.forEach((g,i)=>{ const ly=py+s*0.50+i*9; ctx.fillStyle=GOODS[g]; ctx.beginPath(); ctx.arc(px+8,ly-2,3,0,7); ctx.fill();
+    ctx.fillStyle='#cfd8dc'; ctx.fillText((tot[g]||0)+'',px+14,ly+1); });
+  ctx.fillStyle=bundles>0?'#00e676':'#ef5350'; ctx.font='bold 10px ui-monospace,monospace'; ctx.textAlign='center';
+  ctx.fillText('= '+bundles+' bundle'+(bundles===1?'':'s'),px+s/2,py+s-6); }
+function drawHome(px,py){ ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(px,py+8,11,4,0,0,7); ctx.fill();
+  ctx.fillStyle='#c98a5a'; ctx.fillRect(px-9,py-3,18,12); ctx.fillStyle='#7a4a2a'; ctx.beginPath(); ctx.moveTo(px-11,py-3); ctx.lineTo(px,py-13); ctx.lineTo(px+11,py-3); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#3a2415'; ctx.fillRect(px-3,py+2,6,7); }
+function drawPerson(px,py,col,hat){ ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(px,py+5,6,3,0,0,7); ctx.fill();
+  ctx.fillStyle=col; ctx.beginPath(); ctx.arc(px,py-3,6,0,7); ctx.fill();
+  if(hat){ ctx.fillStyle='#5a3a1a'; ctx.beginPath(); ctx.arc(px,py-7,5.5,Math.PI,0); ctx.fill(); }
+  ctx.fillStyle='#222'; ctx.fillRect(px-2,py-4,1.5,1.5); ctx.fillRect(px+1,py-4,1.5,1.5); }
+
+function drawTherm(x,cx,label,val,scale){
+  const ty=38, th=98, tw=16, col=label==='HAPPY'?'#43a047':'#e53935';
+  x.textAlign='center'; x.fillStyle='#cfe0bb'; x.font='bold 10px system-ui'; x.fillText(label, cx, ty-11);
+  x.fillStyle='rgba(0,0,0,.32)'; x.fillRect(cx-tw/2,ty,tw,th);
+  const fh=th*Math.min(1,val/Math.max(1,scale)); x.fillStyle=col; x.fillRect(cx-tw/2,ty+th-fh,tw,fh);
+  x.beginPath(); x.arc(cx,ty+th+9,11,0,7); x.fill();
+  x.fillStyle='#fff'; x.font='bold 11px ui-monospace,monospace'; x.fillText(val, cx, ty+th+13); }
+function drawTherms(){ const x=thermCtx; x.clearRect(0,0,thermCv.width,thermCv.height);
+  const hv=recentHappy.length, sv=recentSad.length, scale=Math.max(5,hv,sv);
+  x.fillStyle='#cfe0bb'; x.font='10px system-ui'; x.textAlign='center'; x.fillText('events · last '+HUD_WINDOW+'s', thermCv.width/2, 14);
+  drawTherm(x, 60, 'HAPPY', hv, scale); drawTherm(x, 130, 'UNHAPPY', sv, scale);
+  x.font='10px ui-monospace,monospace'; x.fillStyle='#8ef58e'; x.fillText('Σ '+happyTotal, 60, 164); x.fillStyle='#ff8a8a'; x.fillText('Σ '+sadTotal, 130, 164); }
+function drawHistory(){ const x=histCtx, Wd=histCv.width, Hd=histCv.height; x.clearRect(0,0,Wd,Hd);
+  x.fillStyle='#cfe0bb'; x.font='15px system-ui'; x.textAlign='left'; x.fillText('Customer outcomes over time — events per '+HUD_SAMPLE+'s', 18, 26);
+  const n=history.length; if(n<2){ x.fillStyle='#9fb08c'; x.font='14px system-ui'; x.fillText('collecting data…', 18, 52); return; }
+  let mx=1; for(const b of history){ if(b.happy>mx)mx=b.happy; if(b.sad>mx)mx=b.sad; }
+  const x0=48, y0=48, plotW=Wd-x0-28, plotH=Hd-120;
+  x.strokeStyle='rgba(255,255,255,.18)'; x.lineWidth=1; x.beginPath(); x.moveTo(x0,y0); x.lineTo(x0,y0+plotH); x.lineTo(x0+plotW,y0+plotH); x.stroke();
+  x.font='12px ui-monospace,monospace'; x.textAlign='right';
+  for(let g=0;g<=4;g++){ const val=Math.round(mx*g/4), gy=y0+plotH*(1-g/4); x.fillStyle='#7d8f6c'; x.fillText(val+'', x0-8, gy+4);
+    if(g>0){ x.strokeStyle='rgba(255,255,255,.06)'; x.beginPath(); x.moveTo(x0,gy); x.lineTo(x0+plotW,gy); x.stroke(); } }
+  function series(key,col){ x.strokeStyle=col; x.lineWidth=3; x.beginPath();
+    for(let i=0;i<n;i++){ const px=x0+plotW*(i/(n-1)), py=y0+plotH*(1-history[i][key]/mx); if(i===0)x.moveTo(px,py); else x.lineTo(px,py); } x.stroke(); }
+  series('happy','#43a047'); series('sad','#e53935');
+  x.font='14px system-ui'; x.textAlign='left'; x.fillStyle='#8ef58e'; x.fillText('● happy', 18, Hd-34); x.fillStyle='#ff8a8a'; x.fillText('● unhappy', 110, Hd-34);
+  x.fillStyle='#7d8f6c'; x.font='12px ui-monospace,monospace'; x.textAlign='right'; x.fillText('← older        now →', x0+plotW, y0+plotH+28); }
+function drawHud(){
+  while(recentHappy.length && recentHappy[0]<simTime-HUD_WINDOW) recentHappy.shift();
+  while(recentSad.length && recentSad[0]<simTime-HUD_WINDOW) recentSad.shift();
+  drawTherms();                                                              // thermometers always live on the left
+  if(hudTab==='hist') drawHistory(); }                                       // history fills the board stage when its tab is active
+function draw(now){
+  const x0=Math.floor(cam.x/TILE), y0=Math.floor(cam.y/TILE);
+  const x1=Math.min(W,x0+Math.ceil(cv.width/TILE)+1), y1=Math.min(H,y0+Math.ceil(cv.height/TILE)+1);
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const t=terr[y*W+x], px=x*TILE-cam.x, py=y*TILE-cam.y;
+    ctx.fillStyle=tileColor(t,x,y); ctx.fillRect(px,py,TILE,TILE);
+    if(t===GRASS && hash(x,y,3)>0.93){ ctx.fillStyle='#6aa835'; ctx.fillRect(px+5,py+6,3,3); ctx.fillRect(px+9,py+9,2,2); }
+    else if(t===WATER && hash(x,y,4)>0.9){ ctx.fillStyle='rgba(220,245,255,.5)'; ctx.fillRect(px+3,py+7,TILE-6,2); }
+    else if(t===ROCK){ ctx.fillStyle='rgba(80,72,64,.5)'; ctx.beginPath(); ctx.arc(px+TILE/2,py+TILE/2,5,0,7); ctx.fill();
+      ctx.fillStyle='rgba(180,172,160,.6)'; ctx.beginPath(); ctx.arc(px+TILE/2-1,py+TILE/2-1,2,0,7); ctx.fill(); } }
+
+  for(const rn of runners){ ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=2; ctx.beginPath();
+    for(let i=0;i<rn.pts.length;i++){ const p=rn.pts[i]; if(i===0)ctx.moveTo(p.x-cam.x,p.y-cam.y); else ctx.lineTo(p.x-cam.x,p.y-cam.y); } ctx.stroke(); }
+
+  for(const b of buildings){ if(b.type!=='supplier')continue; for(const l of b.links){ ctx.strokeStyle='rgba(120,200,90,.16)'; ctx.lineWidth=2; ctx.beginPath();   // supplier feed lines
+    for(let i=0;i<l.path.pts.length;i++){ const p=l.path.pts[i]; if(i===0)ctx.moveTo(p.x-cam.x,p.y-cam.y); else ctx.lineTo(p.x-cam.x,p.y-cam.y); } ctx.stroke(); } }
+
+  for(const b of buildings){ if(b.type!=='warehouse'||!b.cacheFeeds)continue; for(const fd of b.cacheFeeds){ ctx.strokeStyle='rgba(80,200,220,.18)'; ctx.lineWidth=2; ctx.setLineDash([5,4]); ctx.beginPath();   // forward-cache feed lines (origin -> cache)
+    for(let i=0;i<fd.path.pts.length;i++){ const p=fd.path.pts[i]; if(i===0)ctx.moveTo(p.x-cam.x,p.y-cam.y); else ctx.lineTo(p.x-cam.x,p.y-cam.y); } ctx.stroke(); ctx.setLineDash([]); } }
+
+  for(const c of customers){ const hx=c.home.x*TILE+TILE/2-cam.x, hy=c.home.y*TILE+TILE/2-cam.y; drawHome(hx,hy);
+    const bw=26,bh=5,bx=hx-bw/2,by=hy-23,h=c.happiness;                                    // happiness bar over the house (0-100)
+    ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(bx-1,by-1,bw+2,bh+2);
+    ctx.fillStyle='#2a3a1e'; ctx.fillRect(bx,by,bw,bh);
+    ctx.fillStyle=h<20?'#e53935':(h<80?'#fdd835':(h<95?'#29b6f6':'#00e676')); ctx.fillRect(bx,by,bw*(h/100),bh); }
+
+  for(const b of buildings){ const px=(b.cx-1)*TILE-cam.x, py=(b.cy-1)*TILE-cam.y, s=TILE*3;
+    if(px<-s-40||py<-s-40||px>cv.width+40||py>cv.height+40)continue;
+    if(b.type==='warehouse'){ drawWarehouse(px,py,s,b); floatLabel(px+s/2,py,stateLines(b.state)); }
+    else if(b.type==='store'){ drawStore(px,py,s,b); if(b.tier>=1) floatLabel(px+s/2,py,stateLines(b.state)); }   // board cache shown only once it exists
+    else if(b.type==='supplier'){ drawSupplier(px,py,s,b); }
+    else if(b.type==='ordercenter'){ drawOrderCenter(px,py,s,b); }
+    else drawBoard(px,py,s,b);
+    if(b===selected){ ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.strokeRect(px+1,py+1,s-2,s-2);
+      const sb=selButtons(b); drawBtn(sb.del,'✕'); if(sb.up) drawBtn(sb.up,'▲'); } }
+
+  for(const t of trucks){ const px=t.px-cam.x, py=t.py-cam.y;
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(px,py+6,11,4,0,0,7); ctx.fill();
+    ctx.fillStyle='#455a64'; roundRect(px-11,py-5,22,11,2); ctx.fill();                              // truck body
+    ctx.fillStyle=t.amount?GOODS[t.good]:'#90a4ae'; ctx.fillRect(px-9,py-3,9,7);                      // cargo (gray if empty)
+    ctx.fillStyle='#263238'; ctx.beginPath(); ctx.arc(px-6,py+6,2.5,0,7); ctx.arc(px+6,py+6,2.5,0,7); ctx.fill(); }
+
+  for(const t of supplyTrucks){ const px=t.px-cam.x, py=t.py-cam.y; const full=t.phase==='toWh';     // producer trucks: green body, loaded inbound / empty home
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(px,py+6,11,4,0,0,7); ctx.fill();
+    ctx.fillStyle='#558b2f'; roundRect(px-11,py-5,22,11,2); ctx.fill();
+    ctx.fillStyle=full?GOODS[t.good]:'#90a4ae'; ctx.fillRect(px-9,py-3,9,7);
+    ctx.fillStyle='#263238'; ctx.beginPath(); ctx.arc(px-6,py+6,2.5,0,7); ctx.arc(px+6,py+6,2.5,0,7); ctx.fill();
+    if(full){ ctx.fillStyle='#fff'; ctx.font='bold 10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('+',px+5,py); ctx.textBaseline='alphabetic'; } }
+
+  for(const d of deliveries){ const px=d.px-cam.x, py=d.py-cam.y;                                  // home-delivery trucks: warehouse -> home, one bundle component each
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(px,py+6,11,4,0,0,7); ctx.fill();
+    ctx.fillStyle='#1e88e5'; roundRect(px-11,py-5,22,11,2); ctx.fill();
+    ctx.fillStyle=GOODS[d.good]; ctx.fillRect(px-9,py-3,9,7);
+    ctx.fillStyle='#263238'; ctx.beginPath(); ctx.arc(px-6,py+6,2.5,0,7); ctx.arc(px+6,py+6,2.5,0,7); ctx.fill(); }
+
+  for(const t of cacheTrucks){ const px=t.px-cam.x, py=t.py-cam.y; const full=t.phase==='back';     // forward-cache haul: empty out to origin, loaded back
+    ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(px,py+6,11,4,0,0,7); ctx.fill();
+    ctx.fillStyle='#26a69a'; roundRect(px-11,py-5,22,11,2); ctx.fill();
+    ctx.fillStyle=full?GOODS[t.good]:'#90a4ae'; ctx.fillRect(px-9,py-3,9,7);
+    ctx.fillStyle='#263238'; ctx.beginPath(); ctx.arc(px-6,py+6,2.5,0,7); ctx.arc(px+6,py+6,2.5,0,7); ctx.fill(); }
+
+  for(const rn of runners){ const p=pathPos(rn,rn.prog), bob=rn.phase!=='idle'?Math.sin(now/140+rn.prog*0.05)*2:0, px=p.x-cam.x, py=p.y-cam.y-bob;
+    if(rn.phase==='toDest'){ const ck=Object.keys(rn.carry); if(ck.length){ const f=rn.carry[ck[0]];
+      ctx.fillStyle='rgba(255,255,255,.92)'; roundRect(px-9,py-23,18,13,4); ctx.fill();
+      ctx.fillStyle=GOODS[f.good]||'#888'; ctx.beginPath(); ctx.arc(px-4,py-16.5,3,0,7); ctx.fill();
+      ctx.fillStyle='#222'; ctx.font='9px ui-monospace,monospace'; ctx.textAlign='left'; ctx.fillText(''+(ck.length>1?ck.length+'×':f.n),px,py-13); } }
+    drawPerson(px,py,rn.color,true); }
+
+  for(const q of queries){ const px=q.px-cam.x, py=q.py-cam.y; drawPerson(px,py,'#ffd54f',false);    // basic store's live query scouts
+    ctx.fillStyle=q.phase==='back'?(q.hasIt?'#43a047':'#9e9e9e'):'#fb8c00'; ctx.beginPath(); ctx.arc(px,py-15,6,0,7); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.font='bold 9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(q.phase==='back'?(q.hasIt?'✓':'✕'):'?',px,py-14.5); ctx.textBaseline='alphabetic'; }
+
+  for(const c of customers){ const px=c.px-cam.x, py=c.py-cam.y; drawPerson(px,py,'#80cbc4',false);
+    ctx.font='bold 18px ui-monospace,monospace'; ctx.textAlign='center';                   // id label under the icon, so you can find a troubled customer
+    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillText(c.id, px+1, py+22); ctx.fillStyle='#eaf5d8'; ctx.fillText(c.id, px, py+21);
+    if(c.phase==='awaiting' && c.order){                                                   // home-delivery bundle: components + SLA countdown
+      BUNDLE.forEach((g,i)=>{ const dx=px-12+i*12, dy=py-26, got=c.order.delivered.includes(g);
+        ctx.fillStyle=got?GOODS[g]:'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.arc(dx,dy,4.5,0,7); ctx.fill();
+        ctx.strokeStyle=GOODS[g]; ctx.lineWidth=1.2; ctx.stroke(); });
+      ctx.fillStyle=c.order.deadline<15?'#e53935':'#fb8c00'; ctx.beginPath(); ctx.arc(px+24,py-26,7,0,7); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 9px ui-monospace,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(Math.ceil(Math.max(0,c.order.deadline)),px+24,py-25.5); ctx.textBaseline='alphabetic'; }
+    if((c.phase==='toStore'||c.phase==='waiting') && c.good){                              // what they want
+      ctx.fillStyle='rgba(255,255,255,.94)'; ctx.beginPath(); ctx.arc(px,py-17,8,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.12)'; ctx.lineWidth=1; ctx.stroke();
+      ctx.fillStyle=GOODS[c.good]; ctx.beginPath(); ctx.arc(px,py-17,4.5,0,7); ctx.fill(); }
+    if(c.phase==='waiting'){                                                                // waiting + countdown
+      ctx.fillStyle='#fb8c00'; ctx.beginPath(); ctx.arc(px+10,py-15,6.5,0,7); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 9px ui-monospace,monospace'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(Math.ceil(Math.max(0,c.wait)),px+10,py-14.5); ctx.textBaseline='alphabetic'; }
+    else if(c.mood){ const m={happy:['#43a047','✓'],sad:['#e53935','✕'],nostore:['#9e9e9e','?']}[c.mood];
+      if(m){ ctx.fillStyle=m[0]; ctx.beginPath(); ctx.arc(px,py-17,7,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.font='bold 9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(m[1],px,py-16.5); ctx.textBaseline='alphabetic'; } }
+    if(c.carry && c.phase==='toHome' && c.good){ ctx.fillStyle=GOODS[c.good]; ctx.beginPath(); ctx.arc(px+8,py-1,3,0,7); ctx.fill(); } }
+
+  const nb=buildings.filter(b=>b.type==='board').length, nw=buildings.filter(b=>b.type==='warehouse').length, ns=buildings.filter(b=>b.type==='store').length, nsup=buildings.filter(b=>b.type==='supplier').length, noc=buildings.filter(b=>b.type==='ordercenter').length;
+  countsEl.innerHTML='<b>'+nw+'</b> wh · <b>'+ns+'</b> stores · <b>'+noc+'</b> order ctr · <b>'+nb+'</b> boards · <b>'+nsup+'</b> suppliers · <b>'+runners.length+'</b> runners · <b>'+(trucks.length+supplyTrucks.length+deliveries.length+cacheTrucks.length)+'</b> trucks · <b>'+customers.length+'</b> customers';
+  if(msgUntil && performance.now()>msgUntil){ msgEl.textContent=''; msgUntil=0; }
+  drawHud();
+}
+
+function update(dt){
+  simTime+=dt; while(simTime>=nextSample){ history.push({happy:bucket.happy,sad:bucket.sad}); if(history.length>HUD_HISTN)history.shift(); bucket={happy:0,sad:0}; nextSample+=HUD_SAMPLE; }   // roll a history bucket every HUD_SAMPLE seconds
+  let sp=(keys['shift']?900:420)*dt, dx=0,dy=0;
+  if(keys['a']||keys['arrowleft'])dx--; if(keys['d']||keys['arrowright'])dx++;
+  if(keys['w']||keys['arrowup'])dy--; if(keys['s']||keys['arrowdown'])dy++;
+  cam.x=Math.max(0,Math.min(W*TILE-cv.width, cam.x+dx*sp)); cam.y=Math.max(0,Math.min(H*TILE-cv.height, cam.y+dy*sp));
+  for(const rn of runners){
+    if(rn.phase==='idle'){ if(rn.a.ver!==rn.lastVer){ rn.carry=snapshot(rn.a.state); rn.lastVer=rn.a.ver; rn.phase='toDest'; rn.prog=0; } }   // source changed -> go
+    else if(rn.phase==='toDest'){ rn.prog+=rn.speed*dt; if(rn.prog>=rn.total){ rn.prog=rn.total;
+        const before=JSON.stringify(rn.b.state); merge(rn.b.state,rn.carry); if(JSON.stringify(rn.b.state)!==before) rn.b.ver++; rn.phase='toSource'; } }
+    else { rn.prog-=rn.speed*dt; if(rn.prog<=0){ rn.prog=0; rn.phase='idle'; } } }
+  updateCustomers(dt); for(const b of buildings) if(b.type==='store') prefetchShelf(b); updateTrucks(dt); updateQueries(dt);
+  updateSuppliers(dt); updateSupplyTrucks(dt); updateDeliveries(dt); updateCacheFeeds(dt); updateCacheTrucks(dt);
+}
+let last=null;
+function loop(now){ if(last===null)last=now; const dt=Math.min(0.05,(now-last)/1000); last=now; update(dt); draw(now); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
