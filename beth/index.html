@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KittyRescue — Wireframes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3a322c; --mute:#8a7f76; --paper:#fbf6ee; --soft:#efe7db;
+    --in:#3f9b6b; --der:#b06aa0; --warn:#cf5a4e;
+    --shadow:0 4px 16px rgba(120,90,60,.12);
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Nunito',ui-rounded,'Segoe UI',system-ui,sans-serif;margin:0;background:var(--paper);color:var(--ink)}
+  .display{font-family:'Baloo 2','Nunito',sans-serif}
+
+  header.top{padding:16px 22px;background:#6b4f3f;color:#fff;display:flex;align-items:center;justify-content:space-between}
+  header.top h1{margin:0;font-size:20px;font-weight:800}
+  header.top .sub{font-size:12.5px;color:#e8d7c6}
+  header.top .bell{font-size:13px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px}
+
+  .container{max-width:900px;margin:0 auto;padding:18px}
+
+  .legend{background:#fff;border-radius:14px;padding:9px 16px;display:flex;gap:18px;flex-wrap:wrap;
+          align-items:center;font-size:12px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .legend b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  .tag{font-size:10.5px;padding:1px 7px;border-radius:20px;border:1px solid;display:inline-block;font-weight:700}
+  .tag.in{color:var(--in);border-color:var(--in);background:#edf9f2}
+  .tag.der{color:var(--der);border-color:var(--der);background:#fbeef7}
+
+  nav.screens{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+  nav.screens button{font-family:inherit;font-size:13px;font-weight:700;padding:8px 16px;border:none;
+        background:#fff;border-radius:22px;cursor:pointer;color:var(--mute);box-shadow:var(--shadow)}
+  nav.screens button.active{background:#6b4f3f;color:#fff}
+
+  .screen{display:none} .screen.show{display:block}
+  h2.sec{font-size:18px;margin:2px 0 14px;display:flex;align-items:center;gap:10px}
+  h2.sec .count{font-size:13px;color:var(--mute);font-weight:600}
+  .filter{margin-left:auto;font-family:inherit;font-size:12px;border:none;border-radius:20px;padding:6px 12px;background:#fff;color:var(--mute);box-shadow:var(--shadow)}
+
+  /* ---- card grid: two columns on desktop ---- */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:640px){ .grid{grid-template-columns:1fr} .container{padding:12px} }
+
+  /* ====== KITTEN CARD (pastel) ====== */
+  .kcard{background:var(--tint,#eee);border-radius:20px;overflow:hidden;box-shadow:var(--shadow)}
+  .kcard .head{background:var(--deep,#999);color:#fff;padding:11px 16px;display:flex;align-items:center;gap:12px}
+  .kcard .head .avatar{width:46px;height:46px;border-radius:50%;border:2.5px solid rgba(255,255,255,.85);
+        overflow:hidden;flex:none;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:22px}
+  .kcard .head .avatar img{width:100%;height:100%;object-fit:cover}
+  .kcard .head .nm{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:19px;line-height:1.1}
+  .kcard .head .stage{font-size:11px;opacity:.92}
+  .kcard .head .who{font-size:12.5px;font-weight:700;opacity:.98;display:flex;align-items:center;gap:4px;margin-top:3px}
+  .kcard .head .loc{font-size:11px;opacity:.8;display:flex;align-items:center;gap:4px;margin-top:1px}
+  .kcard .head .alarms{margin-left:auto;display:flex;gap:6px;font-size:17px;align-items:center}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+  .ktag{font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.72);color:var(--ink)}
+  .ktag.warn{color:var(--warn)} .ktag.med{color:var(--der)} .ktag.good{color:var(--in)} .ktag.wean{color:#5a8a2e}
+  .nudge{background:rgba(255,255,255,.72);border:1.5px dashed #6b9b3f;border-radius:13px;padding:8px 12px;margin-top:10px;
+         font-size:12.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .nudge b{color:#4e7a2c} .nudge .btn{margin-left:auto}
+  .weanbox{background:#f1f7e8;border-radius:13px;padding:11px;margin-top:6px;font-size:12.5px;color:#4e7a2c}
+
+  .stats{display:flex;gap:6px;padding:14px 14px 6px}
+  .stat{flex:1;text-align:center;background:rgba(255,255,255,.6);border-radius:14px;padding:9px 4px}
+  .stat .num{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:18px;line-height:1.05}
+  .stat .num.hero{font-size:23px}
+  .stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);margin-top:3px}
+  .stat .num.down{color:var(--warn)} .stat .num.up{color:var(--in)}
+
+  .kbody{padding:8px 16px 16px}
+  .note{font-size:12.5px;color:var(--ink);opacity:.8}
+  .note.warn{color:var(--warn);font-weight:700;opacity:1}
+
+  sup.b{font-size:8.5px;padding:0 3px;border-radius:6px;border:1px solid;margin-left:1px;font-weight:800;vertical-align:super}
+  sup.b.in{color:var(--in);border-color:var(--in)} sup.b.der{color:var(--der);border-color:var(--der)}
+  .v-der{color:var(--der)}
+
+  /* meds expando */
+  details.meds{margin-top:10px;background:rgba(255,255,255,.65);border-radius:14px;overflow:hidden}
+  details.meds>summary{list-style:none;cursor:pointer;padding:10px 14px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+  details.meds>summary::-webkit-details-marker{display:none}
+  details.meds>summary .chev{margin-left:auto;transition:transform .15s}
+  details.meds[open]>summary .chev{transform:rotate(90deg)}
+  .med{padding:8px 14px;border-top:1px solid rgba(0,0,0,.06);font-size:12.5px}
+  .med .mn{font-weight:700}
+  .med .ms{color:var(--mute);font-size:11.5px;margin-top:2px}
+
+  .btn{font-family:inherit;font-weight:700;border-radius:22px;padding:10px 18px;cursor:pointer;border:none;background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+  .btn.primary{background:#6b4f3f;color:#fff}
+  .btn.full{display:block;width:100%;text-align:center}
+  .btn.sm{padding:7px 14px;font-size:12.5px}
+  .btn.ghost{background:rgba(255,255,255,.7);box-shadow:none}
+
+  /* detail extras */
+  .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin:12px 16px}
+  @media (max-width:640px){ .statgrid{grid-template-columns:1fr 1fr} }
+  .mini{background:rgba(255,255,255,.65);border-radius:13px;padding:10px}
+  .mini .k{font-size:9.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.03em}
+  .mini .val{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:15px;margin-top:3px}
+
+  .tabs{display:flex;gap:7px;margin:12px 16px 4px}
+  .tabs button{font-family:inherit;font-weight:700;font-size:12px;padding:7px 15px;border:none;background:rgba(255,255,255,.6);border-radius:18px;cursor:pointer;color:var(--mute)}
+  .tabs button.on{background:var(--deep);color:#fff}
+
+  .evt{display:flex;gap:10px;font-size:13px;padding:9px 16px;border-top:1px solid rgba(0,0,0,.05);align-items:center}
+  .evt .ti{color:var(--mute);width:52px;flex:none;font-size:12px}
+  .evt .pen{margin-left:auto;color:var(--mute);cursor:pointer}
+  .evt img.thumb{width:44px;height:44px;border-radius:10px;object-fit:cover}
+
+  svg.chart{background:rgba(255,255,255,.6);border-radius:14px;margin:6px 16px;width:calc(100% - 32px)}
+  svg.chart text{font:10px 'Nunito',sans-serif}
+  .caption{font-size:11px;color:var(--mute);text-align:center;margin:2px 16px 0}
+
+  /* form */
+  .formcard{background:#fff;border-radius:20px;box-shadow:var(--shadow);padding:18px;max-width:480px}
+  label.f{display:block;font-size:11px;color:var(--mute);margin:14px 0 5px;text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+  .field{display:flex;align-items:center;gap:8px}
+  .field input{font-family:inherit;font-size:15px;padding:10px 12px;border:1.5px solid var(--soft);border-radius:12px;width:100%;background:#fff}
+  .unit{font-size:13px;color:var(--mute)}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .seg button{font-family:inherit;font-weight:700;font-size:12.5px;padding:8px 14px;border:none;background:var(--soft);border-radius:18px;cursor:pointer;color:var(--ink)}
+  .seg button.on{background:#6b4f3f;color:#fff}
+  .hint{font-size:11.5px;color:var(--mute);margin-top:5px}
+  .derived-out{background:#fbeef7;border:1.5px dashed var(--der);border-radius:13px;padding:11px;margin-top:6px;font-size:13.5px}
+  .photoinput{display:none}
+</style>
+</head>
+<body>
+<header class="top">
+  <div><h1 class="display">🐾 KittyRescue</h1><div class="sub">Whisker Rescue Co. · coordinator view</div></div>
+  <div class="bell">🔔 3 alerts</div>
+</header>
+
+<div class="container">
+  <div class="legend">
+    <b>Reading the numbers</b>
+    <span><span class="tag in">entered</span> someone logged it</span>
+    <span><span class="tag der">derived</span> the app worked it out</span>
+  </div>
+
+  <nav class="screens" id="nav">
+    <button data-s="caseload" class="active">Caseload</button>
+    <button data-s="alerts">Alerts</button>
+    <button data-s="litter">Litter chart</button>
+  </nav>
+
+  <!-- ===================== CASELOAD ===================== -->
+  <div class="screen show" id="s-caseload">
+    <h2 class="sec display">My caseload <span class="count">5 active</span>
+        <select class="filter"><option>Active</option><option>All</option></select></h2>
+    <div class="grid">
+
+      <!-- Biscuit: bottle, old enough to wean -> nudge -->
+      <div class="kcard" data-kitten="Biscuit" onclick="go('detail','Biscuit')">
+        <div class="head"><div class="avatar" id="av-card-Biscuit">🐱</div>
+          <div><div class="nm">Biscuit</div><div class="stage">bottle baby 🍼 · 29d</div>
+            <div class="who">👤 Beth</div><div class="loc">📍 home</div></div></div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">396<span style="font-size:13px">g</span></div><div class="lbl">weight</div></div>
+          <div class="stat"><div class="num">♂</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num up">▲+12</div><div class="lbl">g/day</div></div>
+        </div>
+        <div class="kbody"><div class="note">last logged 40m ago · growing nicely</div>
+          <div class="nudge cardnudge" onclick="event.stopPropagation()">🌱 <b>Ready to wean?</b> 29 days old
+            <button class="btn primary sm" onclick="startWeaning('Biscuit')">Start</button></div>
+          <div class="tags"><span class="ktag">🏷️ Cedar lot</span><span class="ktag good">📈 gaining</span><span class="ktag">🍼 6 feeds/day</span></div>
+        </div>
+      </div>
+
+      <!-- Olive: bottle, alert, no meds -->
+      <div class="kcard" data-kitten="Olive" onclick="go('detail','Olive')">
+        <div class="head"><div class="avatar" id="av-card-Olive">🐱</div>
+          <div><div class="nm">Olive</div><div class="stage">bottle baby 🍼 · 15d</div>
+            <div class="who">👤 Maria</div><div class="loc">📍 home</div></div>
+          <div class="alarms">⚠️</div></div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">268<span style="font-size:13px">g</span></div><div class="lbl">weight</div></div>
+          <div class="stat"><div class="num">♀</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num down">▼−11</div><div class="lbl">7-day net</div></div>
+        </div>
+        <div class="kbody"><div class="note warn">⚠️ weight-loss alert · 3 weigh-ins</div>
+          <div class="tags"><span class="ktag">🏷️ Maple porch</span><span class="ktag warn">⚠️ weight loss</span><span class="ktag">🍼 bottle</span></div>
+        </div>
+      </div>
+
+      <!-- Tofu: older, meds, surgery ready -->
+      <div class="kcard" data-kitten="Tofu" onclick="go('detail','Tofu')">
+        <div class="head"><div class="avatar" id="av-card-Tofu">🐱</div>
+          <div><div class="nm">Tofu</div><div class="stage">older kitten 🐱 · 52d</div>
+            <div class="who">👤 Beth</div><div class="loc">📍 At vet hospital</div></div>
+          <div class="alarms">💊</div></div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">690<span style="font-size:13px">g</span></div><div class="lbl">weight</div></div>
+          <div class="stat"><div class="num">♂</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num up">✓</div><div class="lbl">surgery</div></div>
+        </div>
+        <div class="kbody">
+          <div class="note">surgery-eligible 🎉 · last logged 5h ago</div>
+          <details class="meds" onclick="event.stopPropagation()">
+            <summary>💊 Meds &amp; schedule <span class="tag der">2</span><span class="chev">›</span></summary>
+            <div class="med"><div class="mn">Panacur (dewormer)</div>
+              <div class="ms">0.5 mL · every 2 weeks · next due <span class="v-der">Jun 24<sup class="b der">ƒ</sup></span></div></div>
+            <div class="med"><div class="mn">Clavamox (medication)</div>
+              <div class="ms">0.1 mL · twice daily · 3 days remaining</div></div>
+          </details>
+          <div class="tags"><span class="ktag">🏷️ Oak Ave.</span><span class="ktag med">💊 2 meds</span><span class="ktag good">🎉 surgery ready</span></div>
+        </div>
+      </div>
+
+      <!-- Miso: older, dewormer due -->
+      <div class="kcard" data-kitten="Miso" onclick="go('detail','Miso')">
+        <div class="head"><div class="avatar" id="av-card-Miso">🐱</div>
+          <div><div class="nm">Miso</div><div class="stage">older kitten 🐱 · 49d</div>
+            <div class="who">👤 Sam</div><div class="loc">📍 home</div></div>
+          <div class="alarms">💊</div></div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">612<span style="font-size:13px">g</span></div><div class="lbl">weight</div></div>
+          <div class="stat"><div class="num">♀</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num up">▲+9</div><div class="lbl">g/day</div></div>
+        </div>
+        <div class="kbody">
+          <div class="note" style="color:var(--der);font-weight:700">💊 dewormer due</div>
+          <details class="meds" open onclick="event.stopPropagation()">
+            <summary>💊 Meds &amp; schedule <span class="tag der">1</span><span class="chev">›</span></summary>
+            <div class="med"><div class="mn">Panacur (dewormer)</div>
+              <div class="ms" style="color:var(--der)">0.5 mL · every 2 weeks · <b>due 2 days ago</b><sup class="b der">ƒ</sup></div></div>
+          </details>
+          <div class="tags"><span class="ktag">🏷️ Maple porch</span><span class="ktag warn">💊 dewormer due</span><span class="ktag">🐱 older</span></div>
+        </div>
+      </div>
+
+      <!-- Mochi: weaning -->
+      <div class="kcard" data-kitten="Mochi" onclick="go('detail','Mochi')">
+        <div class="head"><div class="avatar" id="av-card-Mochi">🐱</div>
+          <div><div class="nm">Mochi</div><div class="stage">weaning 🌱 · 33d</div>
+            <div class="who">👤 Maria</div><div class="loc">📍 home</div></div></div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">438<span style="font-size:13px">g</span></div><div class="lbl">weight</div></div>
+          <div class="stat"><div class="num">♀</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num up">▲+9</div><div class="lbl">g/day</div></div>
+        </div>
+        <div class="kbody">
+          <div class="note" style="color:#4e7a2c">🌱 weaning · bottle intake tapering (normal)</div>
+          <div class="tags"><span class="ktag">🏷️ Garden gate</span><span class="ktag wean">🌱 weaning</span><span class="ktag">🍽️ on wet food</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== DETAIL (one big card, data-driven) ===================== -->
+  <div class="screen" id="s-detail">
+    <button class="btn ghost sm" onclick="go('caseload')">‹ Caseload</button>
+    <div id="detailbody"></div>
+    <input type="file" accept="image/*" id="photoinput" class="photoinput" onchange="addPhoto(this)">
+  </div>
+
+  <!-- ===================== LOG ===================== -->
+  <div class="screen" id="s-log">
+    <button class="btn ghost sm" onclick="go('detail')">‹ Cancel</button>
+    <h2 class="sec display" style="margin-top:12px">Log · <span id="logtitle">Olive</span></h2>
+    <div class="formcard">
+      <label class="f">Type</label>
+      <div class="seg" id="typeseg">
+        <button>Weigh-in</button><button class="on">Feeding</button><button>Toileting</button>
+        <button>Note</button><button>Treatment</button>
+        <button onclick="document.getElementById('photoinput2').click()">📷 Photo</button>
+      </div>
+      <input type="file" accept="image/*" id="photoinput2" class="photoinput" onchange="addPhoto(this)">
+
+      <label class="f">When · event time</label>
+      <div class="seg"><button class="on">Now</button><button>Earlier…</button></div>
+      <div class="hint">entry time stamped by the app · source = manual</div>
+
+      <label class="f">Pre-feed weight <span class="tag in">entered</span></label>
+      <div class="field"><input id="pre" type="number" value="270" oninput="calc()"><span class="unit">g</span></div>
+      <label class="f">Post-feed weight <span class="tag in">entered</span></label>
+      <div class="field"><input id="post" type="number" value="281" oninput="calc()"><span class="unit">g</span></div>
+
+      <label class="f">Intake</label>
+      <div class="derived-out"><span class="tag der">derived</span> post − pre =
+        <b id="intake" class="v-der">11</b> mL <span class="hint" style="display:inline">· 1 mL ≈ 1 g · tap to override ✎</span></div>
+
+      <label class="f">Toileting with this feed <span class="tag in">entered</span></label>
+      <div class="seg">Pooped: <button class="on">Yes</button><button>No</button></div>
+      <div class="seg" style="margin-top:7px">Quality: <button class="on">Normal</button><button>Abnormal</button></div>
+
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button class="btn ghost full" onclick="go('detail')">Cancel</button>
+        <button class="btn primary full" onclick="go('detail')">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ALERTS ===================== -->
+  <div class="screen" id="s-alerts">
+    <button class="btn ghost sm" onclick="go('caseload')">‹ Caseload</button>
+    <h2 class="sec display" style="margin-top:12px">Alerts <span class="count">dismissible</span></h2>
+    <div class="grid">
+      <div class="kcard" data-kitten="Olive">
+        <div class="head"><div class="avatar">⚠️</div><div><div class="nm">Weight loss</div><div class="stage">Olive · 1h ago</div></div></div>
+        <div class="kbody"><div class="note">net <span class="v-der">−11 g<sup class="b der">ƒ</sup></span> over 3 weigh-ins<br><span class="hint">evidence: 268g → 274g → 279g</span></div>
+          <div style="display:flex;gap:7px;margin-top:10px"><button class="btn ghost sm" onclick="go('detail','Olive')">View</button><button class="btn primary sm">Acknowledge</button></div></div>
+      </div>
+      <div class="kcard" data-kitten="Miso">
+        <div class="head"><div class="avatar">💊</div><div><div class="nm">Treatment due</div><div class="stage">Miso · dewormer</div></div></div>
+        <div class="kbody"><div class="note">due <span class="v-der">2 days ago<sup class="b der">ƒ</sup></span></div>
+          <button class="btn primary sm" style="margin-top:10px">Acknowledge</button></div>
+      </div>
+      <div class="kcard" data-kitten="Tofu">
+        <div class="head"><div class="avatar">🎉</div><div><div class="nm">Surgery eligible</div><div class="stage">Tofu</div></div></div>
+        <div class="kbody"><div class="note">crossed <span class="v-der">≥680 g &amp; ≥42 d<sup class="b der">ƒ</sup></span></div>
+          <button class="btn primary sm" style="margin-top:10px">Acknowledge</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LITTER ===================== -->
+  <div class="screen" id="s-litter">
+    <button class="btn ghost sm" onclick="go('caseload')">‹ Caseload</button>
+    <h2 class="sec display" style="margin-top:12px">Litter “Maple porch” <span class="count">3 kittens</span></h2>
+    <div class="kcard" data-kitten="Maple porch">
+      <div class="head"><div class="avatar">🐈</div><div><div class="nm">Weight envelope</div><div class="stage">all values derived</div></div></div>
+      <svg class="chart" viewBox="0 0 300 150" height="160">
+        <line x1="30" y1="10" x2="30" y2="120" stroke="#d8cdbd"/><line x1="30" y1="120" x2="290" y2="120" stroke="#d8cdbd"/>
+        <text x="4" y="20" fill="#a89b8b">350</text><text x="4" y="70" fill="#a89b8b">300</text><text x="4" y="120" fill="#a89b8b">250</text>
+        <polygon points="46,96 110,74 174,52 240,34 240,70 174,86 110,104 46,110" fill="var(--deep)" opacity="0.18"/>
+        <text x="150" y="62" fill="#a89b8b">min–max envelope</text>
+        <polyline points="46,103 110,89 174,69 240,52" fill="none" stroke="var(--deep)" stroke-width="2"/>
+        <polyline points="46,108 110,96 174,78 240,64" fill="none" stroke="var(--deep)" stroke-width="2" stroke-dasharray="5 3"/>
+        <polyline points="46,98 110,80 174,58 240,40" fill="none" stroke="var(--deep)" stroke-width="2" stroke-dasharray="1 3"/>
+      </svg>
+      <div class="caption">grayscale-safe: kittens by line style, not color</div>
+      <div class="kbody">
+        <div class="evt" style="padding-left:0"><span>──── Biscuit</span><span class="pen">312 g</span></div>
+        <div class="evt" style="padding-left:0"><span>‑ ‑ ‑ Olive</span><span class="pen" style="color:var(--warn)">268 g ⚠️</span></div>
+        <div class="evt" style="padding-left:0"><span>· · · · Cornmeal</span><span class="pen">330 g</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // each kitten gets a stable pastel (seeded by name → in the real build, by kitten id)
+  const PALETTE=[
+    ['#ffe9dd','#c97b4a'],['#ddf3e7','#3f9b6b'],['#ece6fb','#7a5bb0'],
+    ['#fdf1cf','#bf9426'],['#dcecfa','#4a83bf'],['#fbe2ec','#c25c86'],
+    ['#e9f1da','#7a9445'],['#fde4dd','#c96a5a']
+  ];
+  function colorFor(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return PALETTE[h%PALETTE.length];}
+  document.querySelectorAll('[data-kitten]').forEach(el=>{
+    const [t,d]=colorFor(el.dataset.kitten);
+    el.style.setProperty('--tint',t); el.style.setProperty('--deep',d);
+  });
+
+  // ---------- kitten dataset (drives the detail card) ----------
+  const KITTENS = {
+    Biscuit:{
+      sex:'♂', stageKey:'bottle', stage:'bottle baby 🍼', age:29, foster:'Beth', placed:'23d', location:'home',
+      weight:396, trend:'▲ +12', trendCls:'up', alarms:'', weanReady:true,
+      tags:[{t:'🏷️ Cedar lot'},{t:'📈 gaining',c:'good'},{t:'🍼 6 feeds/day'}],
+      series:[330,346,360,null,374,386,396], ymin:320, ymax:410,
+      minis:[['Subq dose','7.9 mL','v-der'],['Surgery','396/680g · 29/42d','v-der'],['Intake today','54 mL','v-der'],['Feeds today','6']],
+      timeline:[
+        ['08:50','Feeding · pre <b>390</b>→post <b>401g</b> · <b class="v-der">11 mL</b> · 💩 normal'],
+        ['Yesterday','Note · “sniffed the wet-food dish but not eating yet”'],
+        ['06:10','Feeding · pre <b>386</b>→post <b>396g</b> · <b class="v-der">10 mL</b>'],
+        ['03:30','Feeding · pre <b>382</b>→post <b>394g</b> · <b class="v-der">12 mL</b>']]
+    },
+    Olive:{
+      sex:'♀', stageKey:'bottle', stage:'bottle baby 🍼', age:15, foster:'Maria', placed:'6d', location:'home',
+      weight:268, trend:'▼ −3.7', trendCls:'down', alarms:'⚠️',
+      alert:{title:'Weight loss', detail:'3 weigh-ins, net <span class="v-der">−11 g<sup class="b der">ƒ</sup></span> (past noise floor)'},
+      tags:[{t:'🏷️ Maple porch'},{t:'⚠️ weight loss',c:'warn'},{t:'🍼 bottle'}],
+      series:[282,279,290,null,274,271,268], ymin:250, ymax:295,
+      minis:[['Subq dose','5.4 mL','v-der'],['Surgery','268/680g · 15/42d','v-der'],['Intake today','21 mL','v-der'],['Feeds today','2']],
+      timeline:[
+        ['09:10','Feeding · pre <b>270</b>→post <b>281g</b> · <b class="v-der">11 mL</b> · 💩 normal'],
+        ['06:30','Feeding · pre <b>266</b>→post <b>276g</b> · <b class="v-der">10 mL</b>'],
+        ['02:15','Weigh-in · <b>268 g</b>']]
+    },
+    Tofu:{
+      sex:'♂', stageKey:'older', stage:'older kitten 🐱', age:52, foster:'Beth', placed:'28d', location:'At vet hospital',
+      weight:690, trend:'▲ +8', trendCls:'up', alarms:'💊',
+      alert:{title:'Surgery eligible 🎉', detail:'newly crossed <span class="v-der">≥680 g &amp; ≥42 d<sup class="b der">ƒ</sup></span> — book the spay/neuter'},
+      meds:[
+        {name:'Panacur (dewormer)', line:'0.5 mL · every 2 weeks · next due <span class="v-der">Jun 24<sup class="b der">ƒ</sup></span>'},
+        {name:'Clavamox (medication)', line:'0.1 mL · twice daily · 3 days remaining'}],
+      tags:[{t:'🏷️ Oak Ave.'},{t:'💊 2 meds',c:'med'},{t:'🎉 surgery ready',c:'good'}],
+      series:[612,628,641,659,672,690], ymin:600, ymax:700, profile:'older',
+      minis:[['Subq dose','13.8 mL','v-der'],['Surgery','✓ 690/680g · 52/42d','v-der'],['Intake','— not tracked'],['Notes','5 this week']],
+      timeline:[
+        ['Today 08:00','Weigh-in · <b>690 g</b>'],
+        ['Today 08:05','Treatment · <b>Clavamox</b> 0.1 mL given'],
+        ['Yesterday','Note · “eating wet food well, playful, eye discharge clearing”'],
+        ['2d ago','Weigh-in · <b>672 g</b>'],
+        ['3d ago','Treatment · <b>Panacur</b> 0.5 mL given']]
+    },
+    Miso:{
+      sex:'♀', stageKey:'older', stage:'older kitten 🐱', age:49, foster:'Sam', placed:'19d', location:'home',
+      weight:612, trend:'▲ +9', trendCls:'up', alarms:'💊',
+      alert:{title:'Treatment due', detail:'dewormer due <span class="v-der">2 days ago<sup class="b der">ƒ</sup></span>'},
+      meds:[{name:'Panacur (dewormer)', line:'0.5 mL · every 2 weeks · <b>due 2 days ago</b><sup class="b der">ƒ</sup>', warn:true}],
+      medsOpen:true,
+      tags:[{t:'🏷️ Maple porch'},{t:'💊 dewormer due',c:'warn'},{t:'🐱 older'}],
+      series:[560,574,588,null,601,612], ymin:550, ymax:640, profile:'older',
+      minis:[['Subq dose','12.2 mL','v-der'],['Surgery','612/680g · 49/42d','v-der'],['Intake','— not tracked'],['Notes','3 this week']],
+      timeline:[
+        ['Today','Weigh-in · <b>612 g</b>'],
+        ['Yesterday','Note · “climbing everything, litterbox trained 🎉”'],
+        ['2d ago','Weigh-in · <b>604 g</b>'],
+        ['4d ago','Weigh-in · <b>588 g</b>']]
+    },
+    Mochi:{
+      sex:'♀', stageKey:'weaning', stage:'weaning 🌱', age:33, foster:'Maria', placed:'11d', location:'home',
+      weight:438, trend:'▲ +9', trendCls:'up', alarms:'',
+      tags:[{t:'🏷️ Garden gate'},{t:'🌱 weaning',c:'wean'},{t:'🍽️ on wet food'}],
+      series:[392,405,null,418,427,438], ymin:380, ymax:460,
+      minis:[['Subq dose','8.8 mL','v-der'],['Surgery','438/680g · 33/42d','v-der'],['Intake today','22 mL ↓','v-der'],['Bottles today','3']],
+      timeline:[
+        ['09:00','Note · “ate wet food from a dish! 🍽️ first solid meal”'],
+        ['06:30','Feeding · pre <b>432</b>→post <b>440g</b> · <b class="v-der">8 mL</b> bottle'],
+        ['Yesterday','Note · “less interested in the bottle, licking at kibble”'],
+        ['Yesterday','Feeding · pre <b>428</b>→post <b>438g</b> · <b class="v-der">10 mL</b> bottle'],
+        ['2d ago','Weigh-in · <b>427 g</b>']]
+    }
+  };
+  let currentKitten = 'Olive';
+
+  // gap-aware weight chart → SVG (nulls in the series render as breaks, never interpolated)
+  function chartSVG(vals, ymin, ymax, color){
+    const W=300,H=120,padL=34,padR=8,padT=8,padB=22, n=vals.length;
+    const X=i=> padL + (W-padL-padR)*(n<=1?0:i/(n-1));
+    const Y=v=> padT + (H-padT-padB)*(1-(v-ymin)/(ymax-ymin));
+    const segs=[]; let cur=[];
+    vals.forEach((v,i)=>{ if(v==null){ if(cur.length)segs.push(cur); cur=[]; } else cur.push([X(i),Y(v)]); });
+    if(cur.length) segs.push(cur);
+    let p=[`<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#d8cdbd"/>`,
+           `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#d8cdbd"/>`,
+           `<text x="6" y="${Y(ymax)+4}" fill="#a89b8b">${ymax}</text>`,
+           `<text x="6" y="${Y((ymin+ymax)/2)+4}" fill="#a89b8b">${Math.round((ymin+ymax)/2)}</text>`,
+           `<text x="6" y="${Y(ymin)+4}" fill="#a89b8b">${ymin}</text>`];
+    for(let s=0;s<segs.length-1;s++){ const a=segs[s][segs[s].length-1], b=segs[s+1][0];
+      p.push(`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#c9bba8" stroke-width="1" stroke-dasharray="2 4"/>`);
+      p.push(`<text x="${(a[0]+b[0])/2-7}" y="${(a[1]+b[1])/2-6}" fill="#b3a99a">gap</text>`); }
+    segs.forEach(seg=>{ p.push(`<polyline points="${seg.map(q=>q[0]+','+q[1]).join(' ')}" fill="none" stroke="${color}" stroke-width="2.5"/>`);
+      seg.forEach(q=> p.push(`<circle cx="${q[0]}" cy="${q[1]}" r="3" fill="${color}"/>`)); });
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" height="120">${p.join('')}</svg>`;
+  }
+
+  function renderDetail(name){
+    const k=KITTENS[name], [tint,deep]=colorFor(name);
+    const av = k.photo? `<img src="${k.photo}">` : '🐱';
+    const alertHtml = k.alert? `<div class="note warn" style="background:#fff;border-radius:13px;padding:11px;margin-top:6px">⚠️ ${k.alert.title} — ${k.alert.detail}<button class="btn sm" style="margin-top:8px;display:block" onclick="go('alerts')">Acknowledge</button></div>` : '';
+    const medsHtml = (k.meds&&k.meds.length)? `<details class="meds" ${k.medsOpen?'open':''}><summary>💊 Meds &amp; schedule <span class="tag der">${k.meds.length}</span><span class="chev">›</span></summary>${k.meds.map(m=>`<div class="med"><div class="mn">${m.name}</div><div class="ms"${m.warn?' style="color:var(--der)"':''}>${m.line}</div></div>`).join('')}</details>` : '';
+    const tagsHtml = `<div class="tags">${k.tags.map(t=>`<span class="ktag ${t.c||''}">${t.t}</span>`).join('')}</div>`;
+    const nudgeHtml = (k.stageKey==='bottle'&&k.weanReady)? `<div class="nudge">🌱 <b>Ready to wean?</b> ${name} is ${k.age} days — old enough to start solids.<button class="btn primary sm" onclick="startWeaning('${name}')">Start weaning</button></div>` : '';
+    const weanHtml = (k.stageKey==='weaning')? `<div class="weanbox">🌱 <b>Weaning</b> — bottle intake naturally tapers as solids begin, so <b>intake-decline alerts are paused</b> this stage. Weight is still watched.</div>` : '';
+    const grid = k.minis.map(m=>`<div class="mini"><div class="k">${m[0]}</div><div class="val ${m[2]||''}" style="font-size:13px">${m[1]}</div></div>`).join('');
+    const cap = k.stageKey==='weaning' ? 'weaning — bottle intake tapering as solids begin'
+              : k.stageKey==='older' ? 'weighed ~once daily (older kitten) — still gap-aware'
+              : 'gap-aware — a skipped log breaks the line, never interpolates';
+    const tl = k.timeline.map(e=>`<div class="evt"><span class="ti">${e[0]}</span><span>${e[1]}</span><span class="pen">✎</span></div>`).join('');
+    document.getElementById('detailbody').innerHTML = `
+      <div class="kcard" style="margin-top:12px;--tint:${tint};--deep:${deep}">
+        <div class="head">
+          <div class="avatar" id="av-detail" style="width:58px;height:58px;font-size:28px">${av}</div>
+          <div><div class="nm" style="font-size:23px">${name}</div><div class="stage">${k.stage} · ${k.sex} · ${k.age}d</div>
+            <div class="who">👤 ${k.foster} · placed ${k.placed}</div><div class="loc">📍 ${k.location}</div></div>
+          <div class="alarms">${k.alarms}</div>
+        </div>
+        <div class="stats">
+          <div class="stat"><div class="num hero">${k.weight}<span style="font-size:13px">g</span></div><div class="lbl">weight <sup class="b in">in</sup></div></div>
+          <div class="stat"><div class="num">${k.sex}</div><div class="lbl">sex</div></div>
+          <div class="stat"><div class="num">${k.age}d</div><div class="lbl">age <sup class="b der">ƒ</sup></div></div>
+          <div class="stat"><div class="num ${k.trendCls}">${k.trend}</div><div class="lbl">g/day <sup class="b der">ƒ</sup></div></div>
+        </div>
+        <div class="kbody" style="padding-top:0">
+          ${alertHtml}
+          ${nudgeHtml}
+          ${weanHtml}
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost sm" onclick="document.getElementById('photoinput').click()">📷 Add photo</button>
+            <button class="btn ghost sm" onclick="go('log')">+ Log measurement</button>
+          </div>
+          <div class="hint">newest photo becomes ${name}’s icon everywhere</div>
+          ${medsHtml}
+          ${tagsHtml}
+        </div>
+        ${chartSVG(k.series, k.ymin, k.ymax, deep)}
+        <div class="caption">${cap}</div>
+        <div class="statgrid">${grid}</div>
+        <div class="tabs"><button class="on">Timeline</button><button>Series</button>${(k.meds&&k.meds.length)?'<button>Meds</button>':''}</div>
+        <div id="timeline">${tl}</div>
+      </div>`;
+  }
+
+  function go(s, kitten){
+    if(kitten) currentKitten = kitten;
+    if(s==='detail') renderDetail(currentKitten);
+    if(s==='log'){ const lt=document.getElementById('logtitle'); if(lt) lt.textContent=currentKitten; }
+    document.querySelectorAll('.screen').forEach(e=>e.classList.remove('show'));
+    document.getElementById('s-'+s).classList.add('show');
+    document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.s===s));
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.s));
+
+  function calc(){
+    const p=+document.getElementById('pre').value, q=+document.getElementById('post').value;
+    document.getElementById('intake').textContent=isNaN(p)||isNaN(q)?'—':(q-p);
+  }
+  document.querySelectorAll('.seg').forEach(seg=>{
+    seg.querySelectorAll('button').forEach(btn=>{ if(btn.getAttribute('onclick'))return;
+      btn.onclick=()=>{seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');};});
+  });
+
+  // explicit stage transition (the foster confirms the nudge — not automatic on age)
+  function startWeaning(name){
+    const k=KITTENS[name];
+    k.stageKey='weaning'; k.stage='weaning 🌱'; k.weanReady=false;
+    k.tags=[k.tags[0], {t:'🌱 weaning',c:'wean'}, {t:'🍽️ starting solids'}];
+    k.timeline.unshift(['now','Stage → <b>weaning 🌱</b> <span class="tag in">entered</span>']);
+    const card=document.querySelector('.kcard[data-kitten="'+name+'"]');
+    if(card){
+      const st=card.querySelector('.stage'); if(st) st.textContent='weaning 🌱 · '+k.age+'d';
+      const cn=card.querySelector('.cardnudge'); if(cn) cn.remove();
+      const tg=card.querySelector('.tags'); if(tg) tg.innerHTML=k.tags.map(t=>`<span class="ktag ${t.c||''}">${t.t}</span>`).join('');
+    }
+    renderDetail(name); go('detail');
+  }
+
+  function addPhoto(input){
+    const f=input.files&&input.files[0]; if(!f)return;
+    const r=new FileReader();
+    r.onload=e=>{
+      const url=e.target.result, k=KITTENS[currentKitten];
+      k.photo=url;                                   // newest photo wins
+      k.timeline.unshift(['now','<img class="thumb" src="'+url+'" style="vertical-align:middle"> Photo added <span class="tag in">entered</span>']);
+      const cardAv=document.getElementById('av-card-'+currentKitten);
+      if(cardAv) cardAv.innerHTML='<img src="'+url+'">';   // icon on the caseload card
+      renderDetail(currentKitten);
+      go('detail');
+    };
+    r.readAsDataURL(f); input.value='';
+  }
+</script>
+</body>
+</html>
